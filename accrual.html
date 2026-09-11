@@ -119,6 +119,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 <script>
 const MSAL_CFG={auth:{clientId:"d456144c-56d3-469b-8847-4d68d5263562",authority:"https://login.microsoftonline.com/bab151e3-6d5a-4c92-aaaa-fdbb501a398f",redirectUri:window.location.origin+window.location.pathname},cache:{cacheLocation:"sessionStorage"}};
 const SP_SITE="https://serviceprosgroup.sharepoint.com/sites/PropertyManagement";
+const SP_SCOPES=["https://serviceprosgroup.sharepoint.com/AllSites.Write"];
 const WORKROOM_LIST=SP_SITE+"/_api/web/lists/getbytitle('Waste%20Accrual%20Workrooms')";
 const HISTORY_LIST=SP_SITE+"/_api/web/lists/getbytitle('Waste%20Accrual%20History')";
 let msalApp=null,tokenCache=null,workrooms=[],historyRows=[],nsRows=[],wmRows=[],installsRows=[],reviewRows=[],selectedWorkroomKey='',reviewFilter='review',editingWorkroomId=null;
@@ -139,9 +140,9 @@ async function getToken(){
   if(tokenCache)return tokenCache;
   if(!msalApp){msalApp=new msal.PublicClientApplication(MSAL_CFG);await msalApp.initialize();}
   let accounts=msalApp.getAllAccounts();
-  if(!accounts.length){await msalApp.loginPopup({scopes:[SP_SITE+'/.default']});accounts=msalApp.getAllAccounts();}
-  try{const r=await msalApp.acquireTokenSilent({account:accounts[0],scopes:[SP_SITE+'/.default']});tokenCache=r.accessToken;}
-  catch{const r=await msalApp.acquireTokenPopup({account:accounts[0],scopes:[SP_SITE+'/.default']});tokenCache=r.accessToken;}
+  if(!accounts.length){await msalApp.loginPopup({scopes:SP_SCOPES});accounts=msalApp.getAllAccounts();}
+  try{const r=await msalApp.acquireTokenSilent({account:accounts[0],scopes:SP_SCOPES});tokenCache=r.accessToken;}
+  catch{const r=await msalApp.acquireTokenPopup({account:accounts[0],scopes:SP_SCOPES});tokenCache=r.accessToken;}
   return tokenCache;
 }
 async function spGet(url){const token=await getToken(),r=await fetch(url,{headers:{Accept:'application/json;odata=verbose',Authorization:'Bearer '+token}});if(!r.ok)throw new Error(await r.text());return r.json();}
