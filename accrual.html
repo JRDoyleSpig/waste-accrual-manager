@@ -23,11 +23,11 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:9px}.toolbar .spacer{flex:1}.pill{display:inline-flex;align-items:center;padding:3px 8px;border-radius:12px;font-size:10px;font-weight:600;white-space:nowrap}.pill.warn{background:var(--warn-light);color:var(--warn)}.pill.good{background:var(--good-light);color:var(--good)}.pill.red{background:var(--danger-light);color:var(--danger)}.pill.gray{background:var(--surface2);color:var(--muted)}.pill.blue{background:var(--accent-light);color:var(--accent)}
 .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:auto;max-height:calc(100vh - 430px);min-height:270px}table{width:100%;border-collapse:collapse;font-size:11px}th{position:sticky;top:0;z-index:2;background:var(--surface2);text-align:left;padding:7px 8px;border-bottom:1px solid var(--border);font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);white-space:nowrap}td{padding:7px 8px;border-bottom:1px solid var(--border);white-space:nowrap;vertical-align:middle}tbody tr{cursor:pointer}tbody tr:hover td{background:var(--surface2)}tbody tr.selected td{background:var(--accent-light)}.money{font-family:var(--mono);text-align:right}.num{font-family:var(--mono);text-align:right}.workroom{font-weight:600}
 .detail{margin-top:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}.detail-head{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.detail-title{font-size:15px;font-weight:600}.detail-sub{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.45}.detail-body{padding:14px}.metric-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-bottom:12px}.metric-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px}.metric-card .k{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}.metric-card .v{font:600 15px var(--mono);margin-top:4px}.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.form-group{display:flex;flex-direction:column;gap:4px}.form-label{font-size:10px;text-transform:uppercase;color:var(--muted);font-weight:600;letter-spacing:.04em}textarea.form-input{min-height:84px;resize:vertical}.detail-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap}.reason-box{font-size:11px;line-height:1.5;background:var(--warn-light);border:1px solid #ead7b0;padding:9px 10px;border-radius:7px;margin-bottom:12px;color:#6e4b14}
-.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}.accrual-output{margin-top:12px}.accrual-output .panel-head{align-items:flex-start}.accrual-total{font:600 16px var(--mono)}.panel-head{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;gap:8px;align-items:center}.panel-title{font-size:13px;font-weight:600}.panel-body{padding:14px}.setup-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.empty{padding:24px;text-align:center;color:var(--muted);font-size:12px;line-height:1.5}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}.accrual-output{margin-top:12px}.workflow-panel{margin-top:12px}.workflow-steps{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center}.workflow-step{padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--surface2)}.workflow-step.active{border-color:var(--accent-mid);background:var(--accent-light)}.workflow-step.done{border-color:#b9dfd2;background:var(--good-light)}.workflow-step-title{font-size:12px;font-weight:600}.workflow-step-sub{font-size:10px;color:var(--muted);margin-top:4px;line-height:1.45}.workflow-arrow{color:var(--muted);font-size:18px}.validation-summary{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}.validation-chip{border:1px solid var(--border);background:var(--surface2);border-radius:7px;padding:8px 10px;font-size:11px}.postclose-lock{padding:18px;text-align:center;color:var(--muted);font-size:12px}.stage-badge{display:inline-flex;padding:4px 9px;border-radius:12px;font-size:10px;font-weight:600}.stage-progress{background:var(--surface2);color:var(--muted)}.stage-submitted{background:var(--warn-light);color:var(--warn)}.stage-final{background:var(--good-light);color:var(--good)}.accrual-output .panel-head{align-items:flex-start}.accrual-total{font:600 16px var(--mono)}.panel-head{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;gap:8px;align-items:center}.panel-title{font-size:13px;font-weight:600}.panel-body{padding:14px}.setup-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.empty{padding:24px;text-align:center;color:var(--muted);font-size:12px;line-height:1.5}
 .modal-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:flex-start;justify-content:center;padding:30px 12px;overflow:auto}.modal-backdrop.open{display:flex}.modal{width:680px;max-width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 12px 36px rgba(0,0,0,.18);overflow:hidden}.modal-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}.modal-title{font-size:16px;font-weight:600}.modal-close{border:0;background:none;font-size:23px;color:var(--muted);cursor:pointer}.modal-body{padding:16px;display:flex;flex-direction:column;gap:12px}.modal-foot{padding:12px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}.form-group.full{grid-column:1/-1}
 #error-box{display:none;background:var(--danger-light);border:1px solid #f0caca;color:var(--danger);border-radius:8px;padding:10px 12px;font-size:11px;margin-bottom:10px;line-height:1.45}
 @media(max-width:1100px){.stats-row{grid-template-columns:repeat(3,1fr)}.metric-grid{grid-template-columns:repeat(3,1fr)}.upload-strip{grid-template-columns:1fr}}
-@media(max-width:800px){.sidebar{width:135px}.detail-grid,.setup-grid{grid-template-columns:1fr}.stats-row{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:800px){.sidebar{width:135px}.detail-grid,.setup-grid{grid-template-columns:1fr}.stats-row{grid-template-columns:repeat(2,1fr)}.workflow-steps{grid-template-columns:1fr}.workflow-arrow{display:none}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js" crossorigin="anonymous"></script>
@@ -53,7 +53,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 
       <section id="view-review">
         <div class="section-header">
-          <div><div class="section-title">Monthly Review</div><div class="section-sub">Upload the three monthly reports. The app surfaces review triggers; you still decide each location's accrual amount.</div></div>
+          <div><div class="section-title">Monthly Review</div><div class="section-sub">Upload the three pre-close reports, make the accrual decisions, then submit the accrual to Accounting. After month-end close, the Tableau CPI report is required to finalize the month.</div></div>
           <div class="section-actions"><label style="font-size:11px;color:var(--muted)">Accrual month</label><input id="month-select" class="search-box" type="month" onchange="monthChanged()"><button class="btn" onclick="clearMonthlyFiles()">Clear Files</button></div>
         </div>
 
@@ -105,6 +105,47 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
             </table>
           </div>
         </div>
+
+        <div class="panel workflow-panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Month-End Workflow</div>
+              <div class="section-sub">Two separate milestones: your accrual submission, then the required post-close Tableau validation.</div>
+            </div>
+            <div id="month-stage-badge" class="stage-badge stage-progress">In Progress</div>
+          </div>
+          <div class="panel-body">
+            <div class="workflow-steps">
+              <div class="workflow-step" id="step-submit">
+                <div class="workflow-step-title">1 · Accrual Submitted</div>
+                <div class="workflow-step-sub">Finish the review, export the Waste Accrual Entries, and send the Utility Accrual spreadsheet to Accounting.</div>
+                <div style="margin-top:9px"><button class="btn good" id="submit-month-btn" onclick="markAccrualSubmitted()">Mark Accrual Submitted</button></div>
+                <div class="workflow-step-sub" id="submitted-meta"></div>
+              </div>
+              <div class="workflow-arrow">→</div>
+              <div class="workflow-step" id="step-finalize">
+                <div class="workflow-step-title">2 · Post-Close Validation</div>
+                <div class="workflow-step-sub">After Accounting closes the month, upload the Tableau Avg Waste per Install report. This is required before the month can be finalized.</div>
+                <div id="postclose-controls" style="margin-top:9px">
+                  <label class="btn primary file-label" id="tableau-upload-label">Upload Tableau CPI<input id="tableau-file" type="file" accept=".csv,text/csv" onchange="handleTableauFile(this.files[0]);this.value=''"/></label>
+                  <span id="tableau-status" class="upload-status" style="display:inline;margin-left:8px">Not loaded</span>
+                </div>
+                <div style="margin-top:9px"><button class="btn good" id="finalize-month-btn" onclick="markMonthFinalized()" disabled>Mark Month Finalized</button></div>
+                <div class="workflow-step-sub" id="finalized-meta"></div>
+              </div>
+            </div>
+
+            <div id="postclose-validation" class="hidden" style="margin-top:14px">
+              <div class="validation-summary" id="validation-summary"></div>
+              <div style="overflow:auto;max-height:360px;border:1px solid var(--border);border-radius:8px">
+                <table>
+                  <thead><tr><th>Workroom</th><th style="text-align:right">Accrual</th><th style="text-align:right">Pre-Close CPI</th><th style="text-align:right">Tableau Installs</th><th style="text-align:right">Final Tableau CPI</th><th style="text-align:right">% Diff</th><th>Check</th></tr></thead>
+                  <tbody id="validation-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section id="view-workrooms" class="hidden">
@@ -114,7 +155,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 
       <section id="view-history" class="hidden">
         <div class="section-header"><div><div class="section-title">Accrual History</div><div class="section-sub">Saved monthly decisions from SharePoint.</div></div><div class="section-actions"><input class="search-box" id="history-search" placeholder="Search workroom…" oninput="renderHistory()"></div></div>
-        <div class="panel"><div style="overflow:auto"><table><thead><tr><th>Month</th><th>Workroom</th><th>Method</th><th style="text-align:right">Vendor Expense</th><th style="text-align:right">WM Spend</th><th style="text-align:right">Difference</th><th style="text-align:right">CPI</th><th style="text-align:right">Accrual Amount</th><th>Decision</th><th>Reason</th></tr></thead><tbody id="history-tbody"></tbody></table></div></div>
+        <div class="panel"><div style="overflow:auto"><table><thead><tr><th>Month</th><th>Workroom</th><th>Method</th><th style="text-align:right">Vendor Expense</th><th style="text-align:right">WM Spend</th><th style="text-align:right">Difference</th><th style="text-align:right">CPI</th><th style="text-align:right">Accrual Amount</th><th style="text-align:right">Final Tableau CPI</th><th>Decision</th><th>Reason</th></tr></thead><tbody id="history-tbody"></tbody></table></div></div>
       </section>
     </main>
   </div>
@@ -141,7 +182,7 @@ const SP_SITE="https://serviceprosgroup.sharepoint.com/sites/PropertyManagement"
 const SP_SCOPES=["https://serviceprosgroup.sharepoint.com/AllSites.Write"];
 const WORKROOM_LIST=SP_SITE+"/_api/web/lists/getbytitle('Waste%20Accrual%20Workrooms')";
 const HISTORY_LIST=SP_SITE+"/_api/web/lists/getbytitle('Waste%20Accrual%20History')";
-let msalApp=null,tokenCache=null,workrooms=[],historyRows=[],nsRows=[],wmRows=[],installsRows=[],reviewRows=[],selectedWorkroomKey='',reviewFilter='review',editingWorkroomId=null,workroomFieldMap={},historyFieldMap={};
+let msalApp=null,tokenCache=null,workrooms=[],historyRows=[],monthRecords=[],nsRows=[],wmRows=[],installsRows=[],tableauRows=[],tableauInfo=null,reviewRows=[],selectedWorkroomKey='',reviewFilter='review',editingWorkroomId=null,workroomFieldMap={},historyFieldMap={};
 const DEFAULT_WASTE_ACCOUNT='6701 Utilities : Utilities - Trash/Dumpsters';
 
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -188,7 +229,7 @@ async function loadSharePoint(force=false){
       rule:fieldVal(x,wf,'Special Billing / Review Rule',''),
       notes:fieldVal(x,wf,'Notes','')
     }));
-    historyRows=h.map(x=>({
+    const mappedHistory=h.map(x=>({
       id:x.Id,
       name:fieldVal(x,hf,'Workroom Name',''),
       number:String(fieldVal(x,hf,'Workroom Number','')||''),
@@ -206,10 +247,20 @@ async function loadSharePoint(force=false){
       decision:fieldVal(x,hf,'Accrual Decision',''),
       reason:fieldVal(x,hf,'Decision Reason',''),
       notes:fieldVal(x,hf,'Review Notes',''),
-      reviewedDate:fieldVal(x,hf,'Reviewed Date','')
+      reviewedDate:fieldVal(x,hf,'Reviewed Date',''),
+      monthStatus:fieldVal(x,hf,'Month Status',''),
+      submittedDate:fieldVal(x,hf,'Accrual Submitted Date',''),
+      tableauFile:fieldVal(x,hf,'Tableau File Name',''),
+      tableauValidationDate:fieldVal(x,hf,'Tableau Validation Date',''),
+      finalizedDate:fieldVal(x,hf,'Month Finalized Date',''),
+      tableauInstalls:Number(fieldVal(x,hf,'Tableau Installed Jobs',0)||0),
+      tableauCPI:Number(fieldVal(x,hf,'Tableau CPI',0)||0),
+      tableauPctDiff:Number(fieldVal(x,hf,'Tableau % Diff',0)||0)
     }));
+    monthRecords=mappedHistory.filter(x=>x.name==='__MONTH__');
+    historyRows=mappedHistory.filter(x=>x.name!=='__MONTH__');
     setConn('ok',`SharePoint connected · ${workrooms.length} workroom setups · ${historyRows.length} history records`);
-    renderWorkrooms();renderHistory();buildReviewRows();
+    renderWorkrooms();renderHistory();buildReviewRows();renderMonthWorkflow();renderPostCloseValidation();
   }catch(e){console.error(e);setConn('bad','SharePoint connection failed');showError('Could not connect to the Waste Accrual SharePoint lists. '+(e.message||e));}
 }
 
@@ -224,8 +275,38 @@ async function readDelimitedFile(file){
 async function handleNSFile(file){if(!file)return;try{nsRows=await readDelimitedFile(file);document.getElementById('ns-status').textContent=`${file.name} · ${nsRows.length.toLocaleString()} rows`;const periods=[...new Set(nsRows.map(r=>String(r.Period||'').trim()).filter(Boolean))];const latest=periods.sort((a,b)=>new Date('1 '+a)-new Date('1 '+b)).at(-1);if(latest){const d=new Date('1 '+latest);if(!isNaN(d))document.getElementById('month-select').value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;}buildReviewRows();}catch(e){showError('NetSuite file could not be read: '+e.message);}}
 async function handleWMFile(file){if(!file)return;try{wmRows=await readDelimitedFile(file);document.getElementById('wm-status').textContent=`${file.name} · ${wmRows.length.toLocaleString()} rows`;buildReviewRows();}catch(e){showError('WM Spend file could not be read: '+e.message);}}
 async function handleInstallsFile(file){if(!file)return;try{installsRows=await readDelimitedFile(file);document.getElementById('inst-status').textContent=`${file.name} · ${installsRows.length.toLocaleString()} rows`;buildReviewRows();}catch(e){showError('Completed Installs file could not be read: '+e.message);}}
-function clearMonthlyFiles(){nsRows=[];wmRows=[];installsRows=[];selectedWorkroomKey='';['ns-status','wm-status','inst-status'].forEach(id=>document.getElementById(id).textContent='Not loaded');document.getElementById('detail-panel').classList.add('hidden');buildReviewRows();}
-function monthChanged(){selectedWorkroomKey='';document.getElementById('detail-panel').classList.add('hidden');buildReviewRows();}
+async function handleTableauFile(file){
+  if(!file)return;
+  try{
+    const buf=await file.arrayBuffer(),bytes=new Uint8Array(buf);let text;
+    if(bytes[0]===0xFF&&bytes[1]===0xFE)text=new TextDecoder('utf-16le').decode(buf);else if(bytes[0]===0xFE&&bytes[1]===0xFF)text=new TextDecoder('utf-16be').decode(buf);else text=new TextDecoder('utf-8').decode(buf);
+    const lines=text.replace(/^\uFEFF/,'').split(/\r?\n/).filter(x=>x.trim().length);
+    if(lines.length<3)throw new Error('The Tableau export does not contain enough rows.');
+    const delim=(lines[0].match(/\t/g)||[]).length>(lines[0].match(/,/g)||[]).length?'\t':',';
+    const parseLine=line=>{const wb=XLSX.read(line,{type:'string',FS:delim}),ws=wb.Sheets[wb.SheetNames[0]],a=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});return a[0]||[];};
+    const monthHdr=parseLine(lines[0]),fieldHdr=parseLine(lines[1]);
+    const target=document.getElementById('month-select').value||priorMonthISO(),targetLabel=displayMonth(target);
+    let start=-1;
+    for(let i=1;i<monthHdr.length;i++){if(String(monthHdr[i]||'').trim()===targetLabel){start=i;break;}}
+    if(start<0){
+      const available=[...new Set(monthHdr.map(x=>String(x||'').trim()).filter(Boolean))];
+      if(available.length===1)start=1;
+      else throw new Error(`Selected month ${targetLabel} was not found. Months in file: ${available.join(', ')||'none'}.`);
+    }
+    const data=[];
+    for(const line of lines.slice(2)){
+      const a=parseLine(line),name=String(a[0]||'').trim();
+      if(!name||/grand total/i.test(name))continue;
+      data.push({name,key:norm(name),installs:parseAmount(a[start]),cpi:parseAmount(a[start+1]),pctDiff:parseAmount(String(a[start+2]||'').replace('%',''))});
+    }
+    if(!data.length)throw new Error('No workroom rows were found in the Tableau export.');
+    tableauRows=data;tableauInfo={fileName:file.name,month:target,loadedAt:new Date().toISOString()};
+    document.getElementById('tableau-status').textContent=`${file.name} · ${data.length} workrooms`;
+    renderPostCloseValidation();renderMonthWorkflow();
+  }catch(e){console.error(e);showError('Tableau CPI file could not be read: '+e.message);}
+}
+function clearMonthlyFiles(){nsRows=[];wmRows=[];installsRows=[];tableauRows=[];tableauInfo=null;selectedWorkroomKey='';['ns-status','wm-status','inst-status'].forEach(id=>document.getElementById(id).textContent='Not loaded');document.getElementById('tableau-status').textContent='Not loaded';document.getElementById('detail-panel').classList.add('hidden');document.getElementById('postclose-validation').classList.add('hidden');buildReviewRows();renderMonthWorkflow();}
+function monthChanged(){tableauRows=[];tableauInfo=null;selectedWorkroomKey='';document.getElementById('tableau-status').textContent='Not loaded';document.getElementById('detail-panel').classList.add('hidden');document.getElementById('postclose-validation').classList.add('hidden');buildReviewRows();renderMonthWorkflow();}
 
 function nsSummaryFor(key,ym){const period=monthPeriod(ym);let vendor=0,rev=0;for(const r of nsRows){if(norm(r.Workroom)!==key||String(r.Period||'').trim()!==period)continue;const a=parseAmount(r.Amount);if(String(r['Is Reversal']||'').toLowerCase()==='yes')rev+=a;else vendor+=a;}return{vendor,reversal:rev};}
 function wmSummaryFor(key,ym){let total=0,found=false;const [y,m]=ym.split('-').map(Number);for(const r of wmRows){let d=new Date(r['Service Date']||r['Invoice Date']||'');if(isNaN(d)||d.getFullYear()!==y||d.getMonth()+1!==m)continue;const rk=norm(r['Location Name']||'')||norm(r['Store Number']||'');if(rk!==key)continue;found=true;total+=parseAmount(r['Total Amount USD']);}return{total,found};}
@@ -342,7 +423,69 @@ function exportAccrualEntriesCSV(){
   document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
 
-function renderHistory(){const q=norm(document.getElementById('history-search')?.value||''),rows=historyRows.filter(h=>!q||norm(h.name).includes(q)).sort((a,b)=>b.month.localeCompare(a.month)||a.name.localeCompare(b.name));const tb=document.getElementById('history-tbody');if(!tb)return;tb.innerHTML=rows.length?rows.map(h=>`<tr><td>${esc(displayMonth(h.month))}</td><td class="workroom">${esc(h.name)}</td><td>${methodPill(h.method)}</td><td class="money">${money(h.vendorExpense)}</td><td class="money">${h.method==='WM Method'?money(h.wmSpend):'—'}</td><td class="money">${h.method==='WM Method'?money(h.difference):'—'}</td><td class="money">${money(h.cpi)}</td><td class="money">${money(h.finalAccrual)}</td><td>${esc(h.decision)}</td><td style="max-width:320px;white-space:normal">${esc(h.reason)}</td></tr>`).join(''):`<tr><td colspan="10"><div class="empty">No saved accrual history yet.</div></td></tr>`;}
+function monthRecordFor(ym){return monthRecords.find(r=>r.month===ym)||null;}
+function currentMonthStatus(){return monthRecordFor(document.getElementById('month-select').value||priorMonthISO())?.monthStatus||'In Progress';}
+function fmtDateTime(v){if(!v)return'';const d=new Date(v);return isNaN(d)?'':d.toLocaleString();}
+function workflowFieldsReady(){return ['Month Status','Accrual Submitted Date','Tableau File Name','Tableau Validation Date','Month Finalized Date','Tableau Installed Jobs','Tableau CPI','Tableau % Diff'].every(x=>historyFieldMap[x]);}
+async function upsertMonthRecord(ym,values){
+  const existing=monthRecordFor(ym),et=await listEntityType(HISTORY_LIST),body={__metadata:{type:et},Title:`MONTH-${ym}`};
+  assignField(body,historyFieldMap,'Workroom Name','__MONTH__');assignField(body,historyFieldMap,'Workroom Number','');assignField(body,historyFieldMap,'Accrual Month',ym+'-01T12:00:00Z');assignField(body,historyFieldMap,'Review Status','Reviewed');
+  for(const [k,v] of Object.entries(values))assignField(body,historyFieldMap,k,v);
+  await spWrite(HISTORY_LIST,existing?.id,body);
+}
+async function snapshotReviewRow(r,ym){
+  const existing=historicalFor(r.key,ym),et=await listEntityType(HISTORY_LIST),body={__metadata:{type:et},Title:`${ym}-${r.setup?.number||r.name}`};
+  assignField(body,historyFieldMap,'Workroom Name',r.setup?.name||r.name);assignField(body,historyFieldMap,'Workroom Number',r.setup?.number||'');assignField(body,historyFieldMap,'Accrual Month',ym+'-01T12:00:00Z');assignField(body,historyFieldMap,'Waste Method',r.method);assignField(body,historyFieldMap,'Review Status','Reviewed');assignField(body,historyFieldMap,'Review Trigger',r.trigger||'');assignField(body,historyFieldMap,'NetSuite Vendor Expense',r.nsVendor);assignField(body,historyFieldMap,'Prior Accrual Reversal',r.reversal);assignField(body,historyFieldMap,'WM / Expected Spend',r.wmSpend);assignField(body,historyFieldMap,'Difference',r.method==='WM Method'?r.difference:0);assignField(body,historyFieldMap,'Completed Installs',r.installs);assignField(body,historyFieldMap,'CPI',r.cpi||0);assignField(body,historyFieldMap,'Final Accrual',existing?.finalAccrual||0);assignField(body,historyFieldMap,'Accrual Decision',existing?.finalAccrual>0?'Accrual Entered':'No Accrual');assignField(body,historyFieldMap,'Decision Reason',existing?.reason||(!r.trigger?'No accrual review trigger for the month.':'Reviewed before accrual submission.'));assignField(body,historyFieldMap,'Review Notes',existing?.notes||'');assignField(body,historyFieldMap,'Reviewed Date',existing?.reviewedDate||new Date().toISOString());
+  await spWrite(HISTORY_LIST,existing?.id,body);
+}
+async function markAccrualSubmitted(){
+  const ym=document.getElementById('month-select').value||priorMonthISO();
+  if(!workflowFieldsReady())return alert('The Waste Accrual History list still needs the month-end workflow columns. Run the SharePoint setup script supplied with this version, then refresh SharePoint.');
+  if(!nsRows.length||!wmRows.length||!installsRows.length)return alert('Upload the NetSuite, WM Spend, and Completed Installs files before submitting the accrual.');
+  const active=reviewRows.filter(r=>r.setup?.active!==false),missingSetup=active.filter(r=>!r.setup),unresolved=active.filter(r=>r.status==='Needs Review'&&!r.hist);
+  if(missingSetup.length)return alert(`${missingSetup.length} workroom(s) still need setup before the accrual can be submitted.`);
+  if(unresolved.length)return alert(`${unresolved.length} workroom(s) still have an unresolved review trigger. Review and save those locations first.`);
+  const entries=accrualEntriesForMonth(),total=entries.reduce((s,r)=>s+r.amount,0);
+  if(!confirm(`Mark ${displayMonth(ym)} Accrual Submitted?\n\n${entries.length} accrual entries\nTotal Waste Accrual: ${money(total)}\n\nThis means the Utility Accrual spreadsheet has been sent to Accounting.`))return;
+  const btn=document.getElementById('submit-month-btn');btn.disabled=true;btn.textContent='Saving snapshot…';
+  try{
+    for(const r of active)await snapshotReviewRow(r,ym);
+    await upsertMonthRecord(ym,{'Month Status':'Accrual Submitted','Accrual Submitted Date':new Date().toISOString()});
+    await loadSharePoint();alert(`${displayMonth(ym)} is now marked Accrual Submitted.`);
+  }catch(e){console.error(e);alert('Could not mark Accrual Submitted: '+e.message);}
+  finally{btn.disabled=false;btn.textContent='Mark Accrual Submitted';}
+}
+function renderMonthWorkflow(){
+  const ym=document.getElementById('month-select').value||priorMonthISO(),rec=monthRecordFor(ym),status=rec?.monthStatus||'In Progress',badge=document.getElementById('month-stage-badge');if(!badge)return;
+  badge.textContent=status;badge.className='stage-badge '+(status==='Month Finalized'?'stage-final':status==='Accrual Submitted'?'stage-submitted':'stage-progress');
+  document.getElementById('step-submit').className='workflow-step '+(status==='Month Finalized'||status==='Accrual Submitted'?'done':'active');document.getElementById('step-finalize').className='workflow-step '+(status==='Month Finalized'?'done':status==='Accrual Submitted'?'active':'');
+  document.getElementById('submitted-meta').textContent=rec?.submittedDate?`Submitted ${fmtDateTime(rec.submittedDate)}`:'';document.getElementById('finalized-meta').textContent=rec?.finalizedDate?`Finalized ${fmtDateTime(rec.finalizedDate)}`:'';
+  document.getElementById('submit-month-btn').disabled=status==='Month Finalized'||status==='Accrual Submitted';document.getElementById('tableau-upload-label').style.opacity=status==='In Progress'?'.45':'1';document.getElementById('tableau-file').disabled=status==='In Progress'||status==='Month Finalized';
+  const canFinalize=status==='Accrual Submitted'&&!!tableauInfo&&tableauInfo.month===ym;document.getElementById('finalize-month-btn').disabled=!canFinalize;
+  if(rec?.tableauFile&&!tableauInfo)document.getElementById('tableau-status').textContent=`Validated file: ${rec.tableauFile}`;
+}
+function tableauFor(key){return tableauRows.find(r=>r.key===key)||null;}
+function renderPostCloseValidation(){
+  const box=document.getElementById('postclose-validation'),tb=document.getElementById('validation-tbody'),sum=document.getElementById('validation-summary');if(!box)return;
+  const ym=document.getElementById('month-select').value||priorMonthISO(),hist=historyRows.filter(h=>h.month===ym),active=workrooms.filter(w=>w.active!==false),hasSaved=hist.some(h=>h.tableauCPI||h.tableauInstalls||h.tableauPctDiff);
+  if(!tableauRows.length&&!hasSaved){box.classList.add('hidden');return;}box.classList.remove('hidden');
+  const rows=active.map(w=>{const h=hist.find(x=>norm(x.name)===norm(w.name)),live=tableauFor(norm(w.name)),t=live||((h&&(h.tableauCPI||h.tableauInstalls||h.tableauPctDiff))?{installs:h.tableauInstalls,cpi:h.tableauCPI,pctDiff:h.tableauPctDiff}:null);return{w,h,t};});
+  const matched=rows.filter(x=>x.t).length,missing=rows.length-matched,accrualRows=rows.filter(x=>Number(x.h?.finalAccrual||0)>0).length;sum.innerHTML=`<div class="validation-chip"><b>${matched}</b> matched workrooms</div><div class="validation-chip"><b>${missing}</b> not in Tableau export</div><div class="validation-chip"><b>${accrualRows}</b> accrual locations</div>`;
+  tb.innerHTML=rows.map(({w,h,t})=>`<tr><td class="workroom">${esc(w.name)}</td><td class="money">${money(h?.finalAccrual||0)}</td><td class="money">${h?.cpi?money(h.cpi):'—'}</td><td class="num">${t?num(t.installs):'—'}</td><td class="money">${t?money(t.cpi):'—'}</td><td class="num">${t?`${Number(t.pctDiff||0).toFixed(1)}%`:'—'}</td><td>${t?'<span class="pill good">Matched</span>':'<span class="pill warn">Missing</span>'}</td></tr>`).join('');
+}
+async function markMonthFinalized(){
+  const ym=document.getElementById('month-select').value||priorMonthISO(),status=currentMonthStatus();if(status!=='Accrual Submitted')return alert('The month must be marked Accrual Submitted before it can be finalized.');if(!tableauInfo||tableauInfo.month!==ym)return alert('Upload the Tableau Avg Waste per Install report for the selected month first.');
+  const active=workrooms.filter(w=>w.active!==false),missing=active.filter(w=>!tableauFor(norm(w.name)));if(missing.length&&!confirm(`${missing.length} active workroom(s) are not present in the Tableau export.\n\nContinue and finalize anyway?`))return;
+  if(!confirm(`Mark ${displayMonth(ym)} Month Finalized?\n\nThis confirms Accounting has closed the month and the Tableau CPI report has been reviewed.`))return;
+  const btn=document.getElementById('finalize-month-btn');btn.disabled=true;btn.textContent='Finalizing…';
+  try{
+    for(const w of active){const h=historicalFor(norm(w.name),ym),t=tableauFor(norm(w.name));if(!h||!t)continue;const et=await listEntityType(HISTORY_LIST),body={__metadata:{type:et},Title:`${ym}-${w.number||w.name}`};assignField(body,historyFieldMap,'Tableau Installed Jobs',t.installs);assignField(body,historyFieldMap,'Tableau CPI',t.cpi);assignField(body,historyFieldMap,'Tableau % Diff',t.pctDiff);await spWrite(HISTORY_LIST,h.id,body);}
+    const now=new Date().toISOString();await upsertMonthRecord(ym,{'Month Status':'Month Finalized','Tableau File Name':tableauInfo.fileName,'Tableau Validation Date':now,'Month Finalized Date':now});await loadSharePoint();renderPostCloseValidation();alert(`${displayMonth(ym)} is finalized.`);
+  }catch(e){console.error(e);alert('Could not finalize month: '+e.message);}
+  finally{btn.disabled=false;btn.textContent='Mark Month Finalized';}
+}
+
+function renderHistory(){const q=norm(document.getElementById('history-search')?.value||''),rows=historyRows.filter(h=>!q||norm(h.name).includes(q)).sort((a,b)=>b.month.localeCompare(a.month)||a.name.localeCompare(b.name));const tb=document.getElementById('history-tbody');if(!tb)return;tb.innerHTML=rows.length?rows.map(h=>`<tr><td>${esc(displayMonth(h.month))}</td><td class="workroom">${esc(h.name)}</td><td>${methodPill(h.method)}</td><td class="money">${money(h.vendorExpense)}</td><td class="money">${h.method==='WM Method'?money(h.wmSpend):'—'}</td><td class="money">${h.method==='WM Method'?money(h.difference):'—'}</td><td class="money">${money(h.cpi)}</td><td class="money">${money(h.finalAccrual)}</td><td class="money">${h.tableauCPI?money(h.tableauCPI):'—'}</td><td>${esc(h.decision)}</td><td style="max-width:320px;white-space:normal">${esc(h.reason)}</td></tr>`).join(''):`<tr><td colspan="11"><div class="empty">No saved accrual history yet.</div></td></tr>`;}
 
 document.getElementById('month-select').value=priorMonthISO();
 loadSharePoint();
