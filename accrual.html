@@ -23,7 +23,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:9px}.toolbar .spacer{flex:1}.pill{display:inline-flex;align-items:center;padding:3px 8px;border-radius:12px;font-size:10px;font-weight:600;white-space:nowrap}.pill.warn{background:var(--warn-light);color:var(--warn)}.pill.good{background:var(--good-light);color:var(--good)}.pill.red{background:var(--danger-light);color:var(--danger)}.pill.gray{background:var(--surface2);color:var(--muted)}.pill.blue{background:var(--accent-light);color:var(--accent)}
 .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:auto;max-height:calc(100vh - 430px);min-height:270px}table{width:100%;border-collapse:collapse;font-size:11px}th{position:sticky;top:0;z-index:2;background:var(--surface2);text-align:left;padding:7px 8px;border-bottom:1px solid var(--border);font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);white-space:nowrap}td{padding:7px 8px;border-bottom:1px solid var(--border);white-space:nowrap;vertical-align:middle}tbody tr{cursor:pointer}tbody tr:hover td{background:var(--surface2)}tbody tr.selected td{background:var(--accent-light)}.money{font-family:var(--mono);text-align:right}.num{font-family:var(--mono);text-align:right}.workroom{font-weight:600}
 .detail{margin-top:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}.detail-head{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.detail-title{font-size:15px;font-weight:600}.detail-sub{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.45}.detail-body{padding:14px}.metric-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-bottom:12px}.metric-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px}.metric-card .k{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}.metric-card .v{font:600 15px var(--mono);margin-top:4px}.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.form-group{display:flex;flex-direction:column;gap:4px}.form-label{font-size:10px;text-transform:uppercase;color:var(--muted);font-weight:600;letter-spacing:.04em}textarea.form-input{min-height:84px;resize:vertical}.detail-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap}.reason-box{font-size:11px;line-height:1.5;background:var(--warn-light);border:1px solid #ead7b0;padding:9px 10px;border-radius:7px;margin-bottom:12px;color:#6e4b14}
-.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}.panel-head{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;gap:8px;align-items:center}.panel-title{font-size:13px;font-weight:600}.panel-body{padding:14px}.setup-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.empty{padding:24px;text-align:center;color:var(--muted);font-size:12px;line-height:1.5}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}.accrual-output{margin-top:12px}.accrual-output .panel-head{align-items:flex-start}.accrual-total{font:600 16px var(--mono)}.panel-head{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;gap:8px;align-items:center}.panel-title{font-size:13px;font-weight:600}.panel-body{padding:14px}.setup-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.empty{padding:24px;text-align:center;color:var(--muted);font-size:12px;line-height:1.5}
 .modal-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:flex-start;justify-content:center;padding:30px 12px;overflow:auto}.modal-backdrop.open{display:flex}.modal{width:680px;max-width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 12px 36px rgba(0,0,0,.18);overflow:hidden}.modal-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}.modal-title{font-size:16px;font-weight:600}.modal-close{border:0;background:none;font-size:23px;color:var(--muted);cursor:pointer}.modal-body{padding:16px;display:flex;flex-direction:column;gap:12px}.modal-foot{padding:12px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}.form-group.full{grid-column:1/-1}
 #error-box{display:none;background:var(--danger-light);border:1px solid #f0caca;color:var(--danger);border-radius:8px;padding:10px 12px;font-size:11px;margin-bottom:10px;line-height:1.45}
 @media(max-width:1100px){.stats-row{grid-template-columns:repeat(3,1fr)}.metric-grid{grid-template-columns:repeat(3,1fr)}.upload-strip{grid-template-columns:1fr}}
@@ -53,7 +53,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 
       <section id="view-review">
         <div class="section-header">
-          <div><div class="section-title">Monthly Review</div><div class="section-sub">Upload the three monthly reports. The app surfaces review triggers; you still decide the final accrual.</div></div>
+          <div><div class="section-title">Monthly Review</div><div class="section-sub">Upload the three monthly reports. The app surfaces review triggers; you still decide each location's accrual amount.</div></div>
           <div class="section-actions"><label style="font-size:11px;color:var(--muted)">Accrual month</label><input id="month-select" class="search-box" type="month" onchange="monthChanged()"><button class="btn" onclick="clearMonthlyFiles()">Clear Files</button></div>
         </div>
 
@@ -80,10 +80,29 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
             <div class="detail-grid">
               <div class="form-group"><label class="form-label">Decision Reason</label><textarea id="decision-reason" class="form-input" placeholder="Why are you accruing or not accruing?"></textarea></div>
               <div class="form-group"><label class="form-label">Review Notes</label><textarea id="review-notes" class="form-input" placeholder="Supporting detail, invoice timing, haul activity, vendor issue, etc."></textarea></div>
-              <div class="form-group"><label class="form-label">Final Accrual</label><input id="final-accrual" type="number" min="0" step="0.01" class="form-input" placeholder="0.00" oninput="refreshDecisionPreview()"></div>
+              <div class="form-group"><label class="form-label">Accrual Amount</label><input id="final-accrual" type="number" min="0" step="0.01" class="form-input" placeholder="0.00" oninput="refreshDecisionPreview()"></div>
               <div class="form-group"><label class="form-label">Decision</label><input id="decision-preview" class="form-input" disabled></div>
             </div>
             <div class="detail-actions"><button class="btn" onclick="openWorkroomModalForSelected()">Edit Workroom Setup</button><button class="btn good" id="save-review-btn" onclick="saveSelectedReview()">Save Review</button></div>
+          </div>
+        </div>
+
+        <div class="panel accrual-output">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Accrual Entries</div>
+              <div class="section-sub">Only saved workrooms with an accrual amount greater than $0. These are the rows that feed the Waste Accrual section of the monthly accrued-utilities spreadsheet.</div>
+            </div>
+            <div class="section-actions">
+              <div style="text-align:right"><div class="form-label">Total Waste Accrual</div><div class="accrual-total" id="accrual-entries-total">$0.00</div></div>
+              <button class="btn" onclick="exportAccrualEntriesCSV()">Export CSV</button>
+            </div>
+          </div>
+          <div style="overflow:auto">
+            <table>
+              <thead><tr><th>Workroom</th><th>Account</th><th style="text-align:right">Amount</th><th>Vendor</th></tr></thead>
+              <tbody id="accrual-entries-tbody"></tbody>
+            </table>
           </div>
         </div>
       </section>
@@ -95,7 +114,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 
       <section id="view-history" class="hidden">
         <div class="section-header"><div><div class="section-title">Accrual History</div><div class="section-sub">Saved monthly decisions from SharePoint.</div></div><div class="section-actions"><input class="search-box" id="history-search" placeholder="Search workroom…" oninput="renderHistory()"></div></div>
-        <div class="panel"><div style="overflow:auto"><table><thead><tr><th>Month</th><th>Workroom</th><th>Method</th><th style="text-align:right">Vendor Expense</th><th style="text-align:right">WM Spend</th><th style="text-align:right">Difference</th><th style="text-align:right">CPI</th><th style="text-align:right">Final Accrual</th><th>Decision</th><th>Reason</th></tr></thead><tbody id="history-tbody"></tbody></table></div></div>
+        <div class="panel"><div style="overflow:auto"><table><thead><tr><th>Month</th><th>Workroom</th><th>Method</th><th style="text-align:right">Vendor Expense</th><th style="text-align:right">WM Spend</th><th style="text-align:right">Difference</th><th style="text-align:right">CPI</th><th style="text-align:right">Accrual Amount</th><th>Decision</th><th>Reason</th></tr></thead><tbody id="history-tbody"></tbody></table></div></div>
       </section>
     </main>
   </div>
@@ -122,7 +141,8 @@ const SP_SITE="https://serviceprosgroup.sharepoint.com/sites/PropertyManagement"
 const SP_SCOPES=["https://serviceprosgroup.sharepoint.com/AllSites.Write"];
 const WORKROOM_LIST=SP_SITE+"/_api/web/lists/getbytitle('Waste%20Accrual%20Workrooms')";
 const HISTORY_LIST=SP_SITE+"/_api/web/lists/getbytitle('Waste%20Accrual%20History')";
-let msalApp=null,tokenCache=null,workrooms=[],historyRows=[],nsRows=[],wmRows=[],installsRows=[],reviewRows=[],selectedWorkroomKey='',reviewFilter='review',editingWorkroomId=null;
+let msalApp=null,tokenCache=null,workrooms=[],historyRows=[],nsRows=[],wmRows=[],installsRows=[],reviewRows=[],selectedWorkroomKey='',reviewFilter='review',editingWorkroomId=null,workroomFieldMap={},historyFieldMap={};
+const DEFAULT_WASTE_ACCOUNT='6701 Utilities : Utilities - Trash/Dumpsters';
 
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function money(v){const n=Number(v);return Number.isFinite(n)?n.toLocaleString(undefined,{style:'currency',currency:'USD'}):'—';}
@@ -148,15 +168,48 @@ async function getToken(){
 async function spGet(url){const token=await getToken(),r=await fetch(url,{headers:{Accept:'application/json;odata=verbose',Authorization:'Bearer '+token}});if(!r.ok)throw new Error(await r.text());return r.json();}
 async function listItems(listUrl){let url=listUrl+"/items?$top=5000",all=[];while(url){const j=await spGet(url);all.push(...j.d.results);url=j.d.__next||null;}return all;}
 async function listEntityType(listUrl){const j=await spGet(listUrl+"?$select=ListItemEntityTypeFullName");return j.d.ListItemEntityTypeFullName;}
+async function listFieldMap(listUrl){const j=await spGet(listUrl+"/fields?$select=Title,InternalName,TypeAsString&$top=5000"),m={};for(const f of j.d.results)m[f.Title]=f.InternalName;return m;}
+function fieldVal(row,map,title,def=''){const k=map[title];return k&&row[k]!==undefined&&row[k]!==null?row[k]:def;}
+function assignField(body,map,title,value){const k=map[title];if(k)body[k]=value;}
 async function spWrite(listUrl,id,body){const token=await getToken(),headers={Accept:'application/json;odata=verbose','Content-Type':'application/json;odata=verbose',Authorization:'Bearer '+token};let url=listUrl+'/items',method='POST';if(id){url+=`(${id})`;headers['X-HTTP-Method']='MERGE';headers['IF-MATCH']='*';}const r=await fetch(url,{method,headers,body:JSON.stringify(body)});if(!r.ok)throw new Error(await r.text());return id?null:(await r.json()).d;}
 
 async function loadSharePoint(force=false){
   clearError();setConn('loading','Connecting to SharePoint…');if(force)tokenCache=null;
   try{
-    const [w,h]=await Promise.all([listItems(WORKROOM_LIST),listItems(HISTORY_LIST)]);
-    workrooms=w.map(x=>({id:x.Id,name:x.WorkroomName||x.Title||'',number:x.WorkroomNumber||'',active:x.Active!==false,method:x.WasteMethod||'',vendor:x.PrimaryVendor||'',rule:x.SpecialBillingReviewRule||'',notes:x.Notes||''}));
-    historyRows=h.map(x=>({id:x.Id,name:x.WorkroomName||'',number:x.WorkroomNumber||'',month:String(x.AccrualMonth||'').slice(0,7),method:x.WasteMethod||'',status:x.ReviewStatus||'',trigger:x.ReviewTrigger||'',vendorExpense:Number(x.NetSuiteVendorExpense||0),reversal:Number(x.PriorAccrualReversal||0),wmSpend:Number(x.WMExpectedSpend||0),difference:Number(x.Difference||0),installs:Number(x.CompletedInstalls||0),cpi:Number(x.CPI||0),finalAccrual:Number(x.FinalAccrual||0),decision:x.AccrualDecision||'',reason:x.DecisionReason||'',notes:x.ReviewNotes||'',reviewedDate:x.ReviewedDate||''}));
-    setConn('ok',`SharePoint connected · ${workrooms.length} workroom setups · ${historyRows.length} history records`);renderWorkrooms();renderHistory();buildReviewRows();
+    const [wf,hf,w,h]=await Promise.all([listFieldMap(WORKROOM_LIST),listFieldMap(HISTORY_LIST),listItems(WORKROOM_LIST),listItems(HISTORY_LIST)]);
+    workroomFieldMap=wf;historyFieldMap=hf;
+    workrooms=w.map(x=>({
+      id:x.Id,
+      name:fieldVal(x,wf,'Workroom Name',x.Title||''),
+      number:String(fieldVal(x,wf,'Workroom Number','')||''),
+      active:fieldVal(x,wf,'Active',true)!==false,
+      method:fieldVal(x,wf,'Waste Method',''),
+      vendor:fieldVal(x,wf,'Primary Vendor',''),
+      rule:fieldVal(x,wf,'Special Billing / Review Rule',''),
+      notes:fieldVal(x,wf,'Notes','')
+    }));
+    historyRows=h.map(x=>({
+      id:x.Id,
+      name:fieldVal(x,hf,'Workroom Name',''),
+      number:String(fieldVal(x,hf,'Workroom Number','')||''),
+      month:String(fieldVal(x,hf,'Accrual Month','')||'').slice(0,7),
+      method:fieldVal(x,hf,'Waste Method',''),
+      status:fieldVal(x,hf,'Review Status',''),
+      trigger:fieldVal(x,hf,'Review Trigger',''),
+      vendorExpense:Number(fieldVal(x,hf,'NetSuite Vendor Expense',0)||0),
+      reversal:Number(fieldVal(x,hf,'Prior Accrual Reversal',0)||0),
+      wmSpend:Number(fieldVal(x,hf,'WM / Expected Spend',0)||0),
+      difference:Number(fieldVal(x,hf,'Difference',0)||0),
+      installs:Number(fieldVal(x,hf,'Completed Installs',0)||0),
+      cpi:Number(fieldVal(x,hf,'CPI',0)||0),
+      finalAccrual:Number(fieldVal(x,hf,'Final Accrual',0)||0),
+      decision:fieldVal(x,hf,'Accrual Decision',''),
+      reason:fieldVal(x,hf,'Decision Reason',''),
+      notes:fieldVal(x,hf,'Review Notes',''),
+      reviewedDate:fieldVal(x,hf,'Reviewed Date','')
+    }));
+    setConn('ok',`SharePoint connected · ${workrooms.length} workroom setups · ${historyRows.length} history records`);
+    renderWorkrooms();renderHistory();buildReviewRows();
   }catch(e){console.error(e);setConn('bad','SharePoint connection failed');showError('Could not connect to the Waste Accrual SharePoint lists. '+(e.message||e));}
 }
 
@@ -197,21 +250,97 @@ function buildReviewRows(){
 }
 function reviewStatusPill(r){if(r.status==='Reviewed')return'<span class="pill good">Reviewed</span>';if(r.status==='Needs Review')return'<span class="pill warn">Review</span>';return'<span class="pill gray">OK</span>';}
 function methodPill(m){if(m==='WM Method')return'<span class="pill blue">WM Method</span>';if(m==='Special')return'<span class="pill warn">Special</span>';if(m==='Direct Vendor')return'<span class="pill gray">Direct Vendor</span>';return'<span class="pill red">Setup Needed</span>';}
-function renderReview(){renderStats();renderReviewTable();if(selectedWorkroomKey){const r=reviewRows.find(x=>x.key===selectedWorkroomKey);if(r)openDetail(r);}}
-function renderStats(){const active=reviewRows.filter(r=>r.setup?.active!==false),needs=active.filter(r=>r.status==='Needs Review').length,reviewed=active.filter(r=>r.status==='Reviewed').length,setup=active.filter(r=>!r.setup).length,totalAcc=historyRows.filter(h=>h.month===(document.getElementById('month-select').value||priorMonthISO())).reduce((s,h)=>s+h.finalAccrual,0);document.getElementById('stats-row').innerHTML=`<div class="stat-card"><div class="stat-label">Workrooms</div><div class="stat-value">${active.length}</div><div class="stat-sub">In current review data</div></div><div class="stat-card"><div class="stat-label">Need Review</div><div class="stat-value">${needs}</div><div class="stat-sub">Trigger requires judgment</div></div><div class="stat-card"><div class="stat-label">Reviewed</div><div class="stat-value">${reviewed}</div><div class="stat-sub">Saved to history</div></div><div class="stat-card"><div class="stat-label">Setup Needed</div><div class="stat-value">${setup}</div><div class="stat-sub">Not yet in Workrooms list</div></div><div class="stat-card"><div class="stat-label">Final Accrual</div><div class="stat-value">${money(totalAcc)}</div><div class="stat-sub">Saved for ${displayMonth(document.getElementById('month-select').value||priorMonthISO())}</div></div>`;}
+function renderReview(){renderStats();renderReviewTable();renderAccrualEntries();if(selectedWorkroomKey){const r=reviewRows.find(x=>x.key===selectedWorkroomKey);if(r)openDetail(r);}}
+function renderStats(){const active=reviewRows.filter(r=>r.setup?.active!==false),needs=active.filter(r=>r.status==='Needs Review').length,reviewed=active.filter(r=>r.status==='Reviewed').length,setup=active.filter(r=>!r.setup).length,totalAcc=historyRows.filter(h=>h.month===(document.getElementById('month-select').value||priorMonthISO())).reduce((s,h)=>s+h.finalAccrual,0);document.getElementById('stats-row').innerHTML=`<div class="stat-card"><div class="stat-label">Workrooms</div><div class="stat-value">${active.length}</div><div class="stat-sub">In current review data</div></div><div class="stat-card"><div class="stat-label">Need Review</div><div class="stat-value">${needs}</div><div class="stat-sub">Trigger requires judgment</div></div><div class="stat-card"><div class="stat-label">Reviewed</div><div class="stat-value">${reviewed}</div><div class="stat-sub">Saved to history</div></div><div class="stat-card"><div class="stat-label">Setup Needed</div><div class="stat-value">${setup}</div><div class="stat-sub">Not yet in Workrooms list</div></div><div class="stat-card"><div class="stat-label">Total Waste Accrual</div><div class="stat-value">${money(totalAcc)}</div><div class="stat-sub">Saved for ${displayMonth(document.getElementById('month-select').value||priorMonthISO())}</div></div>`;}
 function setReviewFilter(f){reviewFilter=f;['review','all','unassigned'].forEach(x=>document.getElementById('filter-'+x).classList.toggle('primary',x===f));renderReviewTable();}
 function renderReviewTable(){const q=norm(document.getElementById('review-search').value),tb=document.getElementById('review-tbody');let rows=reviewRows.filter(r=>r.setup?.active!==false);if(reviewFilter==='review')rows=rows.filter(r=>r.status==='Needs Review');if(reviewFilter==='unassigned')rows=rows.filter(r=>!r.setup);if(q)rows=rows.filter(r=>norm(r.name).includes(q));tb.innerHTML=rows.length?rows.map(r=>`<tr class="${r.key===selectedWorkroomKey?'selected':''}" onclick="selectReviewRow('${r.key}')"><td class="workroom">${esc(r.name)}</td><td>${methodPill(r.method)}</td><td class="money">${money(r.nsVendor)}</td><td class="money">${money(r.reversal)}</td><td class="money">${r.wmSpend||r.method==='WM Method'?money(r.wmSpend):'—'}</td><td class="money">${r.method==='WM Method'?money(r.difference):'—'}</td><td class="num">${r.installs?num(r.installs):'—'}</td><td class="money">${r.cpi==null?'—':money(r.cpi)}</td><td style="max-width:260px;overflow:hidden;text-overflow:ellipsis">${r.trigger?esc(r.trigger):'<span class="pill gray">No trigger</span>'}</td><td>${reviewStatusPill(r)}</td></tr>`).join(''):`<tr><td colspan="10"><div class="empty">No workrooms match this view. Upload the monthly files or change the filter.</div></td></tr>`;}
 function selectReviewRow(key){selectedWorkroomKey=key;renderReviewTable();const r=reviewRows.find(x=>x.key===key);if(r)openDetail(r);}
 function openDetail(r){const p=document.getElementById('detail-panel');p.classList.remove('hidden');document.getElementById('detail-title').textContent=r.name+' — '+displayMonth(document.getElementById('month-select').value||priorMonthISO());document.getElementById('detail-sub').textContent=(r.setup?.vendor?`Primary vendor: ${r.setup.vendor} · `:'')+(r.setup?.rule||r.method);document.getElementById('detail-status').innerHTML=reviewStatusPill(r);document.getElementById('detail-reason').textContent=r.trigger||'No automatic review trigger. You can still review or enter an accrual if the real-world situation requires it.';document.getElementById('detail-metrics').innerHTML=`<div class="metric-card"><div class="k">Vendor Expense</div><div class="v">${money(r.nsVendor)}</div></div><div class="metric-card"><div class="k">Prior Reversal</div><div class="v">${money(r.reversal)}</div></div><div class="metric-card"><div class="k">WM Spend</div><div class="v">${r.method==='WM Method'?money(r.wmSpend):'—'}</div></div><div class="metric-card"><div class="k">Difference</div><div class="v">${r.method==='WM Method'?money(r.difference):'—'}</div></div><div class="metric-card"><div class="k">Completed Installs</div><div class="v">${r.installs?num(r.installs):'—'}</div></div><div class="metric-card"><div class="k">Booked CPI</div><div class="v">${r.cpi==null?'—':money(r.cpi)}</div></div>`;document.getElementById('decision-reason').value=r.hist?.reason||'';document.getElementById('review-notes').value=r.hist?.notes||'';document.getElementById('final-accrual').value=r.hist?String(r.hist.finalAccrual||0):'';refreshDecisionPreview();}
 function refreshDecisionPreview(){const v=parseAmount(document.getElementById('final-accrual').value);document.getElementById('decision-preview').value=v>0?'Accrual Entered':'No Accrual';}
 
-async function saveSelectedReview(){const r=reviewRows.find(x=>x.key===selectedWorkroomKey);if(!r)return alert('Select a workroom first.');if(!r.setup)return alert('This workroom needs setup before its review can be saved. Click Edit Workroom Setup and save it first.');const ym=document.getElementById('month-select').value||priorMonthISO(),final=parseAmount(document.getElementById('final-accrual').value),reason=document.getElementById('decision-reason').value.trim(),notes=document.getElementById('review-notes').value.trim();if(!reason&&!confirm('No Decision Reason was entered. Save anyway?'))return;const btn=document.getElementById('save-review-btn');btn.disabled=true;btn.textContent='Saving…';try{const et=await listEntityType(HISTORY_LIST),existing=historicalFor(r.key,ym),body={__metadata:{type:et},Title:`${ym}-${r.setup.number||r.name}`,WorkroomName:r.setup.name,WorkroomNumber:r.setup.number||'',AccrualMonth:ym+'-01T12:00:00Z',WasteMethod:r.method,ReviewStatus:'Reviewed',ReviewTrigger:r.trigger||'',NetSuiteVendorExpense:r.nsVendor,PriorAccrualReversal:r.reversal,WMExpectedSpend:r.wmSpend,Difference:r.method==='WM Method'?r.difference:0,CompletedInstalls:r.installs,CPI:r.cpi||0,FinalAccrual:final,AccrualDecision:final>0?'Accrual Entered':'No Accrual',DecisionReason:reason,ReviewNotes:notes,ReviewedDate:new Date().toISOString()};await spWrite(HISTORY_LIST,existing?.id,body);await loadSharePoint();selectedWorkroomKey=r.key;buildReviewRows();alert('Review saved to Waste Accrual History.');}catch(e){console.error(e);alert('Could not save review: '+e.message);}finally{btn.disabled=false;btn.textContent='Save Review';}}
+async function saveSelectedReview(){
+  const r=reviewRows.find(x=>x.key===selectedWorkroomKey);if(!r)return alert('Select a workroom first.');
+  if(!r.setup)return alert('This workroom needs setup before its review can be saved. Click Edit Workroom Setup and save it first.');
+  const ym=document.getElementById('month-select').value||priorMonthISO(),
+        final=parseAmount(document.getElementById('final-accrual').value),
+        reason=document.getElementById('decision-reason').value.trim(),
+        notes=document.getElementById('review-notes').value.trim();
+  if(!reason&&!confirm('No Decision Reason was entered. Save anyway?'))return;
+  const btn=document.getElementById('save-review-btn');btn.disabled=true;btn.textContent='Saving…';
+  try{
+    const et=await listEntityType(HISTORY_LIST),existing=historicalFor(r.key,ym),body={__metadata:{type:et},Title:`${ym}-${r.setup.number||r.name}`};
+    assignField(body,historyFieldMap,'Workroom Name',r.setup.name);
+    assignField(body,historyFieldMap,'Workroom Number',r.setup.number||'');
+    assignField(body,historyFieldMap,'Accrual Month',ym+'-01T12:00:00Z');
+    assignField(body,historyFieldMap,'Waste Method',r.method);
+    assignField(body,historyFieldMap,'Review Status','Reviewed');
+    assignField(body,historyFieldMap,'Review Trigger',r.trigger||'');
+    assignField(body,historyFieldMap,'NetSuite Vendor Expense',r.nsVendor);
+    assignField(body,historyFieldMap,'Prior Accrual Reversal',r.reversal);
+    assignField(body,historyFieldMap,'WM / Expected Spend',r.wmSpend);
+    assignField(body,historyFieldMap,'Difference',r.method==='WM Method'?r.difference:0);
+    assignField(body,historyFieldMap,'Completed Installs',r.installs);
+    assignField(body,historyFieldMap,'CPI',r.cpi||0);
+    assignField(body,historyFieldMap,'Final Accrual',final);
+    assignField(body,historyFieldMap,'Accrual Decision',final>0?'Accrual Entered':'No Accrual');
+    assignField(body,historyFieldMap,'Decision Reason',reason);
+    assignField(body,historyFieldMap,'Review Notes',notes);
+    assignField(body,historyFieldMap,'Reviewed Date',new Date().toISOString());
+    await spWrite(HISTORY_LIST,existing?.id,body);
+    await loadSharePoint();selectedWorkroomKey=r.key;buildReviewRows();
+    alert(final>0?'Review saved. This workroom is now included in Accrual Entries.':'Review saved with no accrual.');
+  }catch(e){console.error(e);alert('Could not save review: '+e.message);}
+  finally{btn.disabled=false;btn.textContent='Save Review';}
+}
 
 function renderWorkrooms(){const q=norm(document.getElementById('workroom-search')?.value||''),rows=workrooms.filter(w=>!q||norm(w.name).includes(q)||norm(w.vendor).includes(q));const tb=document.getElementById('workroom-tbody');if(!tb)return;tb.innerHTML=rows.length?rows.sort((a,b)=>a.name.localeCompare(b.name)).map(w=>`<tr onclick="openWorkroomModal(${w.id})"><td class="workroom">${esc(w.name)}</td><td>${esc(w.number)}</td><td>${w.active?'<span class="pill good">Active</span>':'<span class="pill gray">Inactive</span>'}</td><td>${methodPill(w.method)}</td><td>${esc(w.vendor||'')}</td><td style="max-width:340px;white-space:normal">${esc(w.rule||'')}</td><td style="max-width:300px;white-space:normal">${esc(w.notes||'')}</td></tr>`).join(''):`<tr><td colspan="7"><div class="empty">No workrooms have been saved yet. Use Add Workroom, or upload the monthly files and add setup from Monthly Review.</div></td></tr>`;}
 function openWorkroomModal(id=null,prefill=null){editingWorkroomId=id;const w=id?workrooms.find(x=>x.id===id):prefill;document.getElementById('wr-modal-title').textContent=id?'Edit Workroom':'Add Workroom';document.getElementById('wr-name').value=w?.name||'';document.getElementById('wr-number').value=w?.number||'';document.getElementById('wr-active').value=String(w?.active!==false);document.getElementById('wr-method').value=w?.method&&w.method!=='Unassigned'?w.method:'WM Method';document.getElementById('wr-vendor').value=w?.vendor||'';document.getElementById('wr-rule').value=w?.rule||'';document.getElementById('wr-notes').value=w?.notes||'';document.getElementById('workroom-modal').classList.add('open');}
 function openWorkroomModalForSelected(){const r=reviewRows.find(x=>x.key===selectedWorkroomKey);if(!r)return;openWorkroomModal(r.setup?.id||null,r.setup||{name:r.name,number:(String(r.name).match(/^(\d+)/)||[])[1]||'',active:true,method:r.wmSpend?'WM Method':'Direct Vendor',vendor:'',rule:'',notes:''});}
 function closeWorkroomModal(){document.getElementById('workroom-modal').classList.remove('open');editingWorkroomId=null;}
-async function saveWorkroom(){const name=document.getElementById('wr-name').value.trim();if(!name)return alert('Workroom Name is required.');const btn=document.getElementById('wr-save-btn');btn.disabled=true;btn.textContent='Saving…';try{const et=await listEntityType(WORKROOM_LIST),body={__metadata:{type:et},Title:name,WorkroomName:name,WorkroomNumber:document.getElementById('wr-number').value.trim(),Active:document.getElementById('wr-active').value==='true',WasteMethod:document.getElementById('wr-method').value,PrimaryVendor:document.getElementById('wr-vendor').value.trim(),SpecialBillingReviewRule:document.getElementById('wr-rule').value.trim(),Notes:document.getElementById('wr-notes').value.trim()};await spWrite(WORKROOM_LIST,editingWorkroomId,body);closeWorkroomModal();await loadSharePoint();buildReviewRows();}catch(e){console.error(e);alert('Could not save workroom: '+e.message);}finally{btn.disabled=false;btn.textContent='Save Workroom';}}
+async function saveWorkroom(){
+  const name=document.getElementById('wr-name').value.trim();if(!name)return alert('Workroom Name is required.');
+  const btn=document.getElementById('wr-save-btn');btn.disabled=true;btn.textContent='Saving…';
+  try{
+    const et=await listEntityType(WORKROOM_LIST),body={__metadata:{type:et},Title:name};
+    assignField(body,workroomFieldMap,'Workroom Name',name);
+    assignField(body,workroomFieldMap,'Workroom Number',document.getElementById('wr-number').value.trim());
+    assignField(body,workroomFieldMap,'Active',document.getElementById('wr-active').value==='true');
+    assignField(body,workroomFieldMap,'Waste Method',document.getElementById('wr-method').value);
+    assignField(body,workroomFieldMap,'Primary Vendor',document.getElementById('wr-vendor').value.trim());
+    assignField(body,workroomFieldMap,'Special Billing / Review Rule',document.getElementById('wr-rule').value.trim());
+    assignField(body,workroomFieldMap,'Notes',document.getElementById('wr-notes').value.trim());
+    await spWrite(WORKROOM_LIST,editingWorkroomId,body);closeWorkroomModal();await loadSharePoint();buildReviewRows();
+  }catch(e){console.error(e);alert('Could not save workroom: '+e.message);}
+  finally{btn.disabled=false;btn.textContent='Save Workroom';}
+}
+
+function accrualEntriesForMonth(){
+  const ym=document.getElementById('month-select').value||priorMonthISO();
+  return historyRows
+    .filter(h=>h.month===ym&&Number(h.finalAccrual)>0)
+    .map(h=>{
+      const setup=setupFor(norm(h.name));
+      const wr=(h.number?String(h.number).padStart(2,'0')+'-':'')+h.name;
+      return {workroom:wr,account:DEFAULT_WASTE_ACCOUNT,amount:Number(h.finalAccrual||0),vendor:setup?.vendor||''};
+    })
+    .sort((a,b)=>a.workroom.localeCompare(b.workroom));
+}
+function renderAccrualEntries(){
+  const tb=document.getElementById('accrual-entries-tbody'),totalEl=document.getElementById('accrual-entries-total');
+  if(!tb||!totalEl)return;
+  const rows=accrualEntriesForMonth(),total=rows.reduce((s,r)=>s+r.amount,0);
+  totalEl.textContent=money(total);
+  tb.innerHTML=rows.length?rows.map(r=>`<tr><td class="workroom">${esc(r.workroom)}</td><td>${esc(r.account)}</td><td class="money">${money(r.amount)}</td><td>${esc(r.vendor||'')}</td></tr>`).join(''):`<tr><td colspan="4"><div class="empty">No saved accrual entries for ${esc(displayMonth(document.getElementById('month-select').value||priorMonthISO()))} yet. Save a workroom with an Accrual Amount greater than $0 and it will appear here automatically.</div></td></tr>`;
+}
+function exportAccrualEntriesCSV(){
+  const rows=accrualEntriesForMonth();
+  if(!rows.length)return alert('There are no accrual entries to export for the selected month.');
+  const csvRows=[['Workroom','Account','Amount','Vendor'],...rows.map(r=>[r.workroom,r.account,r.amount.toFixed(2),r.vendor])];
+  const csv=csvRows.map(row=>row.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}),a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download=`Waste_Accrual_Entries_${document.getElementById('month-select').value||priorMonthISO()}.csv`;
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
 
 function renderHistory(){const q=norm(document.getElementById('history-search')?.value||''),rows=historyRows.filter(h=>!q||norm(h.name).includes(q)).sort((a,b)=>b.month.localeCompare(a.month)||a.name.localeCompare(b.name));const tb=document.getElementById('history-tbody');if(!tb)return;tb.innerHTML=rows.length?rows.map(h=>`<tr><td>${esc(displayMonth(h.month))}</td><td class="workroom">${esc(h.name)}</td><td>${methodPill(h.method)}</td><td class="money">${money(h.vendorExpense)}</td><td class="money">${h.method==='WM Method'?money(h.wmSpend):'—'}</td><td class="money">${h.method==='WM Method'?money(h.difference):'—'}</td><td class="money">${money(h.cpi)}</td><td class="money">${money(h.finalAccrual)}</td><td>${esc(h.decision)}</td><td style="max-width:320px;white-space:normal">${esc(h.reason)}</td></tr>`).join(''):`<tr><td colspan="10"><div class="empty">No saved accrual history yet.</div></td></tr>`;}
 
