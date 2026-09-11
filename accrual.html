@@ -42,6 +42,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
     <aside class="sidebar">
       <div class="sidebar-section">Review</div>
       <div class="nav-item active" data-view="review" onclick="showView('review',this)">Monthly Review</div>
+      <div class="sidebar-section">Month End</div>
+      <div class="nav-item" data-view="monthend" onclick="showView('monthend',this)">Month-End</div>
       <div class="sidebar-section">Setup</div>
       <div class="nav-item" data-view="workrooms" onclick="showView('workrooms',this)">Workrooms</div>
       <div class="sidebar-section">History</div>
@@ -53,7 +55,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 
       <section id="view-review">
         <div class="section-header">
-          <div><div class="section-title">Monthly Review</div><div class="section-sub">Upload the three pre-close reports, make the accrual decisions, then submit the accrual to Accounting. After month-end close, the Tableau CPI report is required to finalize the month.</div></div>
+          <div><div class="section-title">Monthly Review</div><div class="section-sub">Upload the three pre-close reports and work through the locations that need judgment. When the monthly review is complete, use Month-End in the sidebar to prepare the Accounting submission.</div></div>
           <div class="section-actions"><label style="font-size:11px;color:var(--muted)">Accrual month</label><input id="month-select" class="search-box" type="month" onchange="monthChanged()"><button class="btn" onclick="clearMonthlyFiles()">Clear Files</button></div>
         </div>
 
@@ -85,6 +87,14 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
             </div>
             <div class="detail-actions"><button class="btn" onclick="openWorkroomModalForSelected()">Edit Workroom Setup</button><button class="btn good" id="save-review-btn" onclick="saveSelectedReview()">Save Review</button></div>
           </div>
+        </div>
+
+      </section>
+
+      <section id="view-monthend" class="hidden">
+        <div class="section-header">
+          <div><div class="section-title">Month-End</div><div class="section-sub">Use this page after reviewing workrooms: prepare the accrual submission for Accounting, then complete the required post-close Tableau validation.</div></div>
+          <div class="section-actions"><label style="font-size:11px;color:var(--muted)">Accrual month</label><input id="month-end-select" class="search-box" type="month" onchange="monthEndMonthChanged(this.value)"></div>
         </div>
 
         <div class="panel accrual-output">
@@ -146,6 +156,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
             </div>
           </div>
         </div>
+
       </section>
 
       <section id="view-workrooms" class="hidden">
@@ -264,7 +275,7 @@ async function loadSharePoint(force=false){
   }catch(e){console.error(e);setConn('bad','SharePoint connection failed');showError('Could not connect to the Waste Accrual SharePoint lists. '+(e.message||e));}
 }
 
-function showView(name,el){document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden'));document.getElementById('view-'+name).classList.remove('hidden');document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));el?.classList.add('active');if(name==='workrooms')renderWorkrooms();if(name==='history')renderHistory();}
+function showView(name,el){document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden'));document.getElementById('view-'+name).classList.remove('hidden');document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));el?.classList.add('active');if(name==='workrooms')renderWorkrooms();if(name==='history')renderHistory();if(name==='monthend'){syncMonthSelectors();renderAccrualEntries();renderMonthWorkflow();renderPostCloseValidation();}}
 
 async function readDelimitedFile(file){
   const buf=await file.arrayBuffer(),bytes=new Uint8Array(buf);let text;
@@ -306,7 +317,9 @@ async function handleTableauFile(file){
   }catch(e){console.error(e);showError('Tableau CPI file could not be read: '+e.message);}
 }
 function clearMonthlyFiles(){nsRows=[];wmRows=[];installsRows=[];tableauRows=[];tableauInfo=null;selectedWorkroomKey='';['ns-status','wm-status','inst-status'].forEach(id=>document.getElementById(id).textContent='Not loaded');document.getElementById('tableau-status').textContent='Not loaded';document.getElementById('detail-panel').classList.add('hidden');document.getElementById('postclose-validation').classList.add('hidden');buildReviewRows();renderMonthWorkflow();}
-function monthChanged(){tableauRows=[];tableauInfo=null;selectedWorkroomKey='';document.getElementById('tableau-status').textContent='Not loaded';document.getElementById('detail-panel').classList.add('hidden');document.getElementById('postclose-validation').classList.add('hidden');buildReviewRows();renderMonthWorkflow();}
+function syncMonthSelectors(){const main=document.getElementById('month-select'),end=document.getElementById('month-end-select');if(main&&end)end.value=main.value||priorMonthISO();}
+function monthEndMonthChanged(v){const main=document.getElementById('month-select');if(main)main.value=v;monthChanged();}
+function monthChanged(){syncMonthSelectors();tableauRows=[];tableauInfo=null;selectedWorkroomKey='';document.getElementById('tableau-status').textContent='Not loaded';document.getElementById('detail-panel').classList.add('hidden');document.getElementById('postclose-validation').classList.add('hidden');buildReviewRows();renderMonthWorkflow();renderPostCloseValidation();}
 
 function nsSummaryFor(key,ym){const period=monthPeriod(ym);let vendor=0,rev=0;for(const r of nsRows){if(norm(r.Workroom)!==key||String(r.Period||'').trim()!==period)continue;const a=parseAmount(r.Amount);if(String(r['Is Reversal']||'').toLowerCase()==='yes')rev+=a;else vendor+=a;}return{vendor,reversal:rev};}
 function wmSummaryFor(key,ym){let total=0,found=false;const [y,m]=ym.split('-').map(Number);for(const r of wmRows){let d=new Date(r['Service Date']||r['Invoice Date']||'');if(isNaN(d)||d.getFullYear()!==y||d.getMonth()+1!==m)continue;const rk=norm(r['Location Name']||'')||norm(r['Store Number']||'');if(rk!==key)continue;found=true;total+=parseAmount(r['Total Amount USD']);}return{total,found};}
@@ -487,7 +500,7 @@ async function markMonthFinalized(){
 
 function renderHistory(){const q=norm(document.getElementById('history-search')?.value||''),rows=historyRows.filter(h=>!q||norm(h.name).includes(q)).sort((a,b)=>b.month.localeCompare(a.month)||a.name.localeCompare(b.name));const tb=document.getElementById('history-tbody');if(!tb)return;tb.innerHTML=rows.length?rows.map(h=>`<tr><td>${esc(displayMonth(h.month))}</td><td class="workroom">${esc(h.name)}</td><td>${methodPill(h.method)}</td><td class="money">${money(h.vendorExpense)}</td><td class="money">${h.method==='WM Method'?money(h.wmSpend):'—'}</td><td class="money">${h.method==='WM Method'?money(h.difference):'—'}</td><td class="money">${money(h.cpi)}</td><td class="money">${money(h.finalAccrual)}</td><td class="money">${h.tableauCPI?money(h.tableauCPI):'—'}</td><td>${esc(h.decision)}</td><td style="max-width:320px;white-space:normal">${esc(h.reason)}</td></tr>`).join(''):`<tr><td colspan="11"><div class="empty">No saved accrual history yet.</div></td></tr>`;}
 
-document.getElementById('month-select').value=priorMonthISO();
+document.getElementById('month-select').value=priorMonthISO();syncMonthSelectors();
 loadSharePoint();
 </script>
 </body>
