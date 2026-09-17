@@ -61,7 +61,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 
         <div class="upload-strip">
           <div class="upload-card"><div class="upload-title">NetSuite Waste Report</div><div id="ns-status" class="upload-status">Not loaded</div><label class="btn primary file-label">Upload CSV<input id="ns-file" type="file" accept=".csv,text/csv" onchange="handleNSFile(this.files[0]);this.value=''"/></label></div>
-          <div class="upload-card"><div class="upload-title">Waste Management Spend</div><div id="wm-status" class="upload-status">Not loaded</div><label class="btn primary file-label">Upload CSV<input id="wm-file" type="file" accept=".csv,text/csv" onchange="handleWMFile(this.files[0]);this.value=''"/></label></div>
+          <div class="upload-card"><div class="upload-title">Waste Management Spend</div><div id="wm-status" class="upload-status">Not loaded</div><label class="btn primary file-label">Upload CSV<input id="wm-file" type="file" accept=".csv,.txt,text/csv,text/plain" onchange="handleWMFile(this.files[0]);this.value=''"/></label></div>
           <div class="upload-card"><div class="upload-title">Completed Installs</div><div id="inst-status" class="upload-status">Not loaded</div><label class="btn primary file-label">Upload CSV<input id="inst-file" type="file" accept=".csv,text/csv" onchange="handleInstallsFile(this.files[0]);this.value=''"/></label></div>
         </div>
 
@@ -190,13 +190,42 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
   </div>
 </div>
 
+
+<div class="modal-backdrop" id="wm-map-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title">Map Waste Management Columns</div>
+        <div class="section-sub" id="wm-map-sub">The WM export format changed. Confirm which columns contain the needed data.</div>
+      </div>
+      <button class="modal-close" onclick="closeWMMapModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="reason-box" style="margin-bottom:0">
+        The app only needs a few fields from the WM export. It will ignore the rest. Location Name or Store Number is required, one date field is required, and Amount is required.
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Location Name</label><select class="form-input" id="wm-map-location"></select></div>
+        <div class="form-group"><label class="form-label">Store Number</label><select class="form-input" id="wm-map-store"></select></div>
+        <div class="form-group"><label class="form-label">Service Date</label><select class="form-input" id="wm-map-service-date"></select></div>
+        <div class="form-group"><label class="form-label">Invoice Date</label><select class="form-input" id="wm-map-invoice-date"></select></div>
+        <div class="form-group full"><label class="form-label">Total Spend / Amount</label><select class="form-input" id="wm-map-amount"></select></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeWMMapModal()">Cancel</button>
+      <button class="btn primary" onclick="applyWMColumnMapping()">Use These Columns</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const MSAL_CFG={auth:{clientId:"d456144c-56d3-469b-8847-4d68d5263562",authority:"https://login.microsoftonline.com/bab151e3-6d5a-4c92-aaaa-fdbb501a398f",redirectUri:window.location.origin+window.location.pathname},cache:{cacheLocation:"sessionStorage"}};
 const SP_SITE="https://serviceprosgroup.sharepoint.com/sites/PropertyManagement";
 const SP_SCOPES=["https://serviceprosgroup.sharepoint.com/AllSites.Write"];
 const WORKROOM_LIST=SP_SITE+"/_api/web/lists/getbytitle('Waste%20Accrual%20Workrooms')";
 const HISTORY_LIST=SP_SITE+"/_api/web/lists/getbytitle('Waste%20Accrual%20History')";
-let msalApp=null,tokenCache=null,workrooms=[],historyRows=[],monthRecords=[],nsRows=[],wmRows=[],installsRows=[],tableauRows=[],tableauInfo=null,reviewRows=[],selectedWorkroomKey='',reviewFilter='all',reviewSort={key:'name',dir:1},editingWorkroomId=null,workroomFieldMap={},historyFieldMap={};
+let msalApp=null,tokenCache=null,workrooms=[],historyRows=[],monthRecords=[],nsRows=[],wmRows=[],installsRows=[],tableauRows=[],tableauInfo=null,reviewRows=[],selectedWorkroomKey='',reviewFilter='all',reviewSort={key:'name',dir:1},editingWorkroomId=null,workroomFieldMap={},historyFieldMap={},wmPendingImport=null;
 const DEFAULT_WASTE_ACCOUNT='6701 Utilities : Utilities - Trash/Dumpsters';
 
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -292,7 +321,159 @@ async function readDelimitedFile(file){
 }
 function col(row,title){const want=String(title).toLowerCase().replace(/[^a-z0-9]/g,'');for(const [k,v] of Object.entries(row||{})){if(String(k).toLowerCase().replace(/[^a-z0-9]/g,'')===want)return v;}return '';}
 async function handleNSFile(file){if(!file)return;try{nsRows=await readDelimitedFile(file);const needed=['Workroom','Period','Amount','Is Reversal'];const missing=needed.filter(h=>!nsRows.length||col(nsRows[0],h)===''&&!Object.keys(nsRows[0]).some(k=>String(k).toLowerCase().replace(/[^a-z0-9]/g,'')===h.toLowerCase().replace(/[^a-z0-9]/g,'')));if(missing.length)throw new Error('Missing expected column(s): '+missing.join(', '));document.getElementById('ns-status').textContent=`${file.name} · ${nsRows.length.toLocaleString()} rows`;buildReviewRows();}catch(e){console.error(e);showError('NetSuite file could not be read: '+e.message);}}
-async function handleWMFile(file){if(!file)return;try{wmRows=await readDelimitedFile(file);document.getElementById('wm-status').textContent=`${file.name} · ${wmRows.length.toLocaleString()} rows`;buildReviewRows();}catch(e){showError('WM Spend file could not be read: '+e.message);}}
+function wmNormHeader(s){return String(s||'').toLowerCase().replace(/\ufeff/g,'').replace(/[^a-z0-9]/g,'');}
+const WM_ALIASES={
+  location:['Location Name','Client Location Name','Site Name','Store Name','Facility Name','Workroom Name','Location','Workroom'],
+  store:['Store Number','Store #','Store No','Location Number','Location #','Location No','Workroom Number','Workroom #'],
+  serviceDate:['Service Date','Date of Service','Service Month','Spend Date','Transaction Date'],
+  invoiceDate:['Invoice Date','Billing Date','Bill Date','Invoice Dt'],
+  amount:['Total Amount USD','Total USD','Total Amount','Amount USD','Total Charge USD','Total Charges USD','Extended Amount USD','Invoice Amount USD','Billed Amount USD','Spend USD']
+};
+function wmParseDelimitedRow(line,delim){
+  const out=[];let cur='',quoted=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(c==='"'){
+      if(quoted&&line[i+1]==='"'){cur+='"';i++;}
+      else quoted=!quoted;
+    }else if(c===delim&&!quoted){out.push(cur);cur='';}
+    else cur+=c;
+  }
+  out.push(cur);return out;
+}
+function wmDetectDelimiter(firstLine){
+  const candidates=['\t',',',';','|'];let best=',',bestCount=-1;
+  for(const d of candidates){
+    const count=wmParseDelimitedRow(firstLine,d).length-1;
+    if(count>bestCount){best=d;bestCount=count;}
+  }
+  return best;
+}
+function wmBestHeader(headers,aliases){
+  const exact=new Map(headers.map((h,i)=>[wmNormHeader(h),i]));
+  for(const a of aliases){const k=wmNormHeader(a);if(exact.has(k))return exact.get(k);}
+  const scored=[];
+  headers.forEach((h,i)=>{
+    const n=wmNormHeader(h);let score=0;
+    for(const a of aliases){
+      const x=wmNormHeader(a);
+      if(n===x)score=Math.max(score,100);
+      else if(n.includes(x)||x.includes(n))score=Math.max(score,70);
+    }
+    if(score)scored.push({i,score});
+  });
+  scored.sort((a,b)=>b.score-a.score);
+  return scored.length&&(!scored[1]||scored[0].score>scored[1].score)?scored[0].i:-1;
+}
+async function wmDecodeFile(file){
+  const buf=await file.arrayBuffer(),bytes=new Uint8Array(buf);let text,encoding='UTF-8';
+  if(bytes[0]===0xFF&&bytes[1]===0xFE){text=new TextDecoder('utf-16le').decode(buf);encoding='UTF-16 LE';}
+  else if(bytes[0]===0xFE&&bytes[1]===0xFF){text=new TextDecoder('utf-16be').decode(buf);encoding='UTF-16 BE';}
+  else{text=new TextDecoder('utf-8').decode(buf);}
+  return {text:text.replace(/^\uFEFF/,''),encoding};
+}
+function wmSelectOptions(id,headers,selected,allowBlank=true){
+  const el=document.getElementById(id);
+  el.innerHTML=(allowBlank?'<option value="">— Not used —</option>':'')+
+    headers.map((h,i)=>`<option value="${i}">${esc(h||('Column '+(i+1)))}</option>`).join('');
+  if(selected>=0)el.value=String(selected);
+}
+function closeWMMapModal(){document.getElementById('wm-map-modal').classList.remove('open');wmPendingImport=null;document.getElementById('wm-status').textContent='Not loaded';}
+function openWMMapModal(pending){
+  wmPendingImport=pending;
+  const {headers,map,file,encoding,delim}=pending;
+  document.getElementById('wm-map-sub').textContent=`${file.name} · ${headers.length} columns · ${encoding} · ${delim==='\t'?'tab-delimited':delim===';'?'semicolon-delimited':delim==='|'?'pipe-delimited':'comma-delimited'}`;
+  wmSelectOptions('wm-map-location',headers,map.location,true);
+  wmSelectOptions('wm-map-store',headers,map.store,true);
+  wmSelectOptions('wm-map-service-date',headers,map.serviceDate,true);
+  wmSelectOptions('wm-map-invoice-date',headers,map.invoiceDate,true);
+  wmSelectOptions('wm-map-amount',headers,map.amount,false);
+  document.getElementById('wm-map-modal').classList.add('open');
+}
+function wmMappingValid(map){
+  return (map.location>=0||map.store>=0)&&(map.serviceDate>=0||map.invoiceDate>=0)&&map.amount>=0;
+}
+async function wmBuildCanonicalRows(pending,map){
+  const status=document.getElementById('wm-status');
+  status.textContent='Processing WM rows…';
+  await new Promise(r=>requestAnimationFrame(r));
+  const lines=pending.text.split(/\r?\n/),rows=[];
+  for(let i=1;i<lines.length;i++){
+    const line=lines[i];if(!line||!line.trim())continue;
+    const a=wmParseDelimitedRow(line,pending.delim);
+    const location=map.location>=0?String(a[map.location]??'').trim():'';
+    const store=map.store>=0?String(a[map.store]??'').trim():'';
+    const service=map.serviceDate>=0?String(a[map.serviceDate]??'').trim():'';
+    const invoice=map.invoiceDate>=0?String(a[map.invoiceDate]??'').trim():'';
+    const amount=map.amount>=0?parseAmount(a[map.amount]):0;
+    if(!location&&!store)continue;
+    if(!service&&!invoice)continue;
+    rows.push({'Location Name':location,'Store Number':store,'Service Date':service,'Invoice Date':invoice,'Total Amount USD':amount});
+    if(i%2000===0){
+      status.textContent=`Processing WM rows… ${i.toLocaleString()} / ${(lines.length-1).toLocaleString()}`;
+      await new Promise(r=>requestAnimationFrame(r));
+    }
+  }
+  return rows;
+}
+async function applyWMColumnMapping(){
+  if(!wmPendingImport)return;
+  const readIndex=id=>{
+    const v=document.getElementById(id).value;
+    return v===''?-1:Number(v);
+  };
+  const map={
+    location:readIndex('wm-map-location'),
+    store:readIndex('wm-map-store'),
+    serviceDate:readIndex('wm-map-service-date'),
+    invoiceDate:readIndex('wm-map-invoice-date'),
+    amount:readIndex('wm-map-amount')
+  };
+  if(!wmMappingValid(map))return alert('Choose Location Name or Store Number, at least one date column, and the Total Spend / Amount column.');
+  const pending=wmPendingImport;
+  document.getElementById('wm-map-modal').classList.remove('open');
+  try{
+    wmRows=await wmBuildCanonicalRows(pending,map);
+    if(!wmRows.length)throw new Error('No usable WM rows were found with the selected columns.');
+    document.getElementById('wm-status').textContent=`${pending.file.name} · ${wmRows.length.toLocaleString()} usable rows`;
+    wmPendingImport=null;buildReviewRows();
+  }catch(e){console.error(e);wmRows=[];wmPendingImport=null;showError('WM Spend file could not be read: '+e.message);document.getElementById('wm-status').textContent='Not loaded';}
+}
+async function handleWMFile(file){
+  if(!file)return;
+  clearError();
+  const status=document.getElementById('wm-status');
+  try{
+    status.textContent='Reading WM file…';
+    await new Promise(r=>requestAnimationFrame(r));
+    const decoded=await wmDecodeFile(file),lines=decoded.text.split(/\r?\n/);
+    const first=lines.find(x=>x.trim().length)||'';
+    if(!first)throw new Error('The file is empty.');
+    const delim=wmDetectDelimiter(first),headers=wmParseDelimitedRow(first,delim).map(x=>String(x||'').replace(/^\uFEFF/,'').trim());
+    if(headers.length<2)throw new Error('Could not detect a delimited WM header row.');
+    status.textContent=`Identifying WM columns… ${headers.length} found`;
+    await new Promise(r=>requestAnimationFrame(r));
+    const map={
+      location:wmBestHeader(headers,WM_ALIASES.location),
+      store:wmBestHeader(headers,WM_ALIASES.store),
+      serviceDate:wmBestHeader(headers,WM_ALIASES.serviceDate),
+      invoiceDate:wmBestHeader(headers,WM_ALIASES.invoiceDate),
+      amount:wmBestHeader(headers,WM_ALIASES.amount)
+    };
+    const pending={file,text:decoded.text,headers,delim,encoding:decoded.encoding,map};
+    if(!wmMappingValid(map)){
+      status.textContent='WM column mapping needed';
+      openWMMapModal(pending);
+      return;
+    }
+    wmRows=await wmBuildCanonicalRows(pending,map);
+    if(!wmRows.length)throw new Error('No usable WM rows were found.');
+    status.textContent=`${file.name} · ${wmRows.length.toLocaleString()} usable rows`;
+    buildReviewRows();
+  }catch(e){
+    console.error(e);wmRows=[];status.textContent='Not loaded';showError('WM Spend file could not be read: '+e.message);
+  }
+}
 async function handleInstallsFile(file){if(!file)return;try{installsRows=await readDelimitedFile(file);document.getElementById('inst-status').textContent=`${file.name} · ${installsRows.length.toLocaleString()} rows`;buildReviewRows();}catch(e){showError('Completed Installs file could not be read: '+e.message);}}
 async function handleTableauFile(file){
   if(!file)return;
@@ -338,7 +519,26 @@ function monthsBetween(start,end){const out=[];if(!start||!end||ymCompare(start,
 function periodToYM(v){const d=new Date('1 '+String(v||''));if(isNaN(d))return'';return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;}
 function nsObservedMonths(key){const out=new Set();for(const r of nsRows){if(nsWorkroomKey(col(r,'Workroom'))!==key)continue;const ym=periodToYM(col(r,'Period'));if(ym)out.add(ym);}return [...out].sort();}
 function wmRowYM(r){const d=new Date(col(r,'Service Date')||col(r,'Invoice Date')||'');if(isNaN(d))return'';return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;}
-function wmRowKey(r){return norm(col(r,'Location Name'))||norm(col(r,'Store Number'));}
+function wmRowKey(r){
+  const store=String(col(r,'Store Number')||'').trim();
+  if(store){
+    const sn=(store.replace(/\.0+$/,'').replace(/^0+/,'')||'0');
+    const byNumber=workrooms.find(w=>{
+      const wn=(String(w.number||'').replace(/\.0+$/,'').replace(/^0+/,'')||'0');
+      return wn===sn;
+    });
+    if(byNumber)return norm(byNumber.name);
+  }
+  const raw=String(col(r,'Location Name')||'').replace(/^Service Pros\s*-?\s*/i,'').trim(),nk=norm(raw);
+  if(!nk)return '';
+  const exact=workrooms.find(w=>norm(w.name)===nk);
+  if(exact)return norm(exact.name);
+  const candidates=workrooms.filter(w=>{
+    const city=norm(String(w.name||'').split(',')[0]);
+    return city&&((nk===city)||(nk.startsWith(city)&&city.length>=5)||(city.startsWith(nk)&&nk.length>=5));
+  });
+  return candidates.length===1?norm(candidates[0].name):nk;
+}
 function wmObservedMonths(key){const out=new Set();for(const r of wmRows){if(wmRowKey(r)!==key)continue;const ym=wmRowYM(r);if(ym)out.add(ym);}return [...out].sort();}
 function monthlyAverage(kind,key,selectedYm,count=null,wmEndMonth=''){
   const prior=shiftYM(selectedYm,-1),observed=kind==='gl'?nsObservedMonths(key):wmObservedMonths(key);if(!observed.length)return null;
@@ -356,7 +556,7 @@ function historicalFor(key,ym){return historyRows.find(h=>norm(h.name)===key&&h.
 function setupFor(key){return workrooms.find(w=>norm(w.name)===key)||null;}
 function workroomVisibleForMonth(setup,ym){if(!setup)return true;if(setup.closedDate){const closeYm=setup.closedDate.slice(0,7);return ymCompare(ym,shiftYM(closeYm,2))<=0;}return setup.active!==false;}
 function wmExpectedForMonth(setup,key,ym){if(!wmRows.length)return false;if(setup?.wmEndMonth&&ymCompare(ym,setup.wmEndMonth)>0)return false;return setup?.method==='WM Method'||wmObservedMonths(key).some(m=>ymCompare(m,ym)<0);}
-function inferredNames(){const m=new Map();for(const r of nsRows){const raw=col(r,'Workroom'),n=nsWorkroomName(raw),k=nsWorkroomKey(raw);if(n&&k)m.set(k,n);}for(const r of wmRows){const raw=String(col(r,'Location Name')||'').replace(/^Service Pros\s*-?\s*/i,'').trim();if(raw&&norm(raw))m.set(norm(raw),raw.replace(/\s+\(([^)]+)\)$/,' $1'));}for(const r of installsRows){const name=String(Object.values(r)[0]||'').trim();if(name&&!/grand total/i.test(name)&&norm(name))m.set(norm(name),name);}for(const w of workrooms)if(w.name)m.set(norm(w.name),w.name);return m;}
+function inferredNames(){const m=new Map();for(const r of nsRows){const raw=col(r,'Workroom'),n=nsWorkroomName(raw),k=nsWorkroomKey(raw);if(n&&k)m.set(k,n);}for(const r of wmRows){const wk=wmRowKey(r),setup=setupFor(wk),raw=String(col(r,'Location Name')||'').replace(/^Service Pros\s*-?\s*/i,'').trim();if(wk)m.set(wk,setup?.name||(raw?raw.replace(/\s+\(([^)]+)\)$/,' $1'):wk));}for(const r of installsRows){const name=String(Object.values(r)[0]||'').trim();if(name&&!/grand total/i.test(name)&&norm(name))m.set(norm(name),name);}for(const w of workrooms)if(w.name)m.set(norm(w.name),w.name);return m;}
 function buildReviewRows(){
   const ym=document.getElementById('month-select').value||priorMonthISO(),names=inferredNames();reviewRows=[];
   for(const [key,name] of names){
