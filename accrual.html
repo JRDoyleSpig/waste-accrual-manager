@@ -172,7 +172,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 <th class="sortable" style="text-align:right" onclick="setReviewSort('wmDifference')">WM Difference<span class="sortmark" id="sort-wmDifference"></span></th>
 <th class="sortable" style="text-align:right" onclick="setReviewSort('recommendedAccrual')">Recommended Accrual<span class="sortmark" id="sort-recommendedAccrual"></span></th>
 <th>Previous Accruals</th>
-<th style="text-align:right">Final Accrual</th>
+<th style="text-align:right">Final Accrual <span title="Blank = $0" style="color:var(--muted);font-weight:400">(blank = $0)</span></th>
 <th class="sortable" style="text-align:right" onclick="setReviewSort('cpiAfterAccrual')">CPI After<span class="sortmark" id="sort-cpiAfterAccrual"></span></th>
 <th class="sortable" onclick="setReviewSort('status')">Review Signals<span class="sortmark" id="sort-status"></span></th>
 <th class="sortable" onclick="setReviewSort('status')">Status</th>
@@ -674,8 +674,27 @@ function wmRowKey(r){
   if(WM_LOCATION_RULES[rawKey]) return norm(WM_LOCATION_RULES[rawKey]);
   if(WM_HISTORICAL_ONLY.has(rawKey)) return rawKey;
 
+  // WM Store Numbers do NOT always equal Service Pros workroom numbers
+  // (example: WM store 000084 is Memphis, while SPIG workroom 84 is San Antonio).
+  // Therefore match the WM Location Name first.
+  if(rawKey){
+    const exact=workrooms.find(w=>norm(w.name)===rawKey);
+    if(exact)return norm(exact.name);
+
+    const candidates=workrooms.filter(w=>{
+      const city=norm(String(w.name||'').split(',')[0]);
+      return city&&((rawKey===city)||(rawKey.startsWith(city)&&city.length>=5)||(city.startsWith(rawKey)&&rawKey.length>=5));
+    });
+    if(candidates.length===1)return norm(candidates[0].name);
+
+    // Known wording aliases that do not city-match cleanly.
+    if(rawKey==='dfw')return norm('Dallas/Fort Worth, TX');
+    if(rawKey==='preferredflooringtampa'||rawKey==='tampa')return norm('Tampa, FL');
+  }
+
+  // Only use Store Number when there is no usable location name.
   const store=String(col(r,'Store Number')||'').trim();
-  if(store){
+  if(!rawKey&&store){
     const sn=(store.replace(/\.0+$/,'').replace(/^0+/,'')||'0');
     const byNumber=workrooms.find(w=>{
       const wn=(String(w.number||'').replace(/\.0+$/,'').replace(/^0+/,'')||'0');
@@ -684,15 +703,7 @@ function wmRowKey(r){
     if(byNumber)return norm(byNumber.name);
   }
 
-  if(!rawKey)return '';
-  const exact=workrooms.find(w=>norm(w.name)===rawKey);
-  if(exact)return norm(exact.name);
-
-  const candidates=workrooms.filter(w=>{
-    const city=norm(String(w.name||'').split(',')[0]);
-    return city&&((rawKey===city)||(rawKey.startsWith(city)&&city.length>=5)||(city.startsWith(rawKey)&&rawKey.length>=5));
-  });
-  return candidates.length===1?norm(candidates[0].name):rawKey;
+  return rawKey;
 }
 function rebuildWMIndex(){
   const totals=new Map(),months=new Map();
@@ -793,7 +804,7 @@ function buildReviewRows(){
     if(setup?.rule)triggers.push(setup.rule);
     if(wm.found&&diff>=1000)triggers.push(`WM Total exceeds booked GL Total by ${money(diff)}`);
     if(wmRows.length&&wmExpected&&!wm.found)triggers.push('WM spend is $0 — confirm whether WM is still used');
-    if(wm.found&&setup&&method!=='WM Method'&&!setup.wmEndMonth)triggers.push('WM activity found — confirm current WM setup');
+    if(wm.found&&setup&&method==='Unassigned'&&!setup.wmEndMonth)triggers.push('WM activity found — confirm current WM setup');
     if(ns.vendor===0&&(inst>0||(gl3||0)>=250||(gl12||0)>=250||(glAll||0)>=250))triggers.push('No current vendor expense');
 
     const glBaselines=[['3-month',gl3],['12-month',gl12],['all-time',glAll]].filter(x=>x[1]!=null&&x[1]>=500);
@@ -832,7 +843,23 @@ function buildReviewRows(){
 function reviewStatusPill(r){if(r.status==='Reviewed')return'<span class="pill good">Reviewed</span>';if(r.status==='Needs Review')return'<span class="pill warn">Review</span>';return'<span class="pill gray">OK</span>';}
 function methodPill(m){if(m==='WM Method')return'<span class="pill blue">WM Method</span>';if(m==='Special')return'<span class="pill warn">Special</span>';if(m==='Direct Vendor')return'<span class="pill gray">Direct Vendor</span>';return'<span class="pill red">Setup Needed</span>';}
 function renderReview(){renderStats();renderReviewTable();renderAccrualEntries();if(selectedWorkroomKey){const r=reviewRows.find(x=>x.key===selectedWorkroomKey);if(r)openDetail(r);}}
-function renderStats(){const visible=reviewRows,needs=visible.filter(r=>r.status==='Needs Review').length,reviewed=visible.filter(r=>r.status==='Reviewed').length,setup=visible.filter(r=>!r.setup).length,totalAcc=historyRows.filter(h=>h.month===(document.getElementById('month-select').value||priorMonthISO())).reduce((s,h)=>s+h.finalAccrual,0);document.getElementById('stats-row').innerHTML=`<div class="stat-card"><div class="stat-label">Workrooms</div><div class="stat-value">${visible.length}</div><div class="stat-sub">Visible for selected month</div></div><div class="stat-card"><div class="stat-label">Need Review</div><div class="stat-value">${needs}</div><div class="stat-sub">Trigger requires judgment</div></div><div class="stat-card"><div class="stat-label">Reviewed</div><div class="stat-value">${reviewed}</div><div class="stat-sub">Saved to history</div></div><div class="stat-card"><div class="stat-label">Setup Needed</div><div class="stat-value">${setup}</div><div class="stat-sub">Not yet in Workrooms list</div></div><div class="stat-card"><div class="stat-label">Total Waste Accrual</div><div class="stat-value">${money(totalAcc)}</div><div class="stat-sub">Saved for ${displayMonth(document.getElementById('month-select').value||priorMonthISO())}</div></div>`;}
+function renderStats(){
+  const visible=reviewRows,ym=document.getElementById('month-select').value||priorMonthISO(),
+    needs=visible.filter(r=>r.status==='Needs Review').length,
+    reviewed=visible.filter(r=>r.status==='Reviewed').length,
+    setup=visible.filter(r=>!r.setup).length,
+    totalAcc=historyRows.filter(h=>h.month===ym).reduce((s,h)=>s+h.finalAccrual,0),
+    companyInstalls=visible.reduce((s,r)=>s+(Number(r.installs)||0),0),
+    companyPreTotal=visible.reduce((s,r)=>s+(Number(r.preTotal)||0),0),
+    companyCPIAfter=companyInstalls?(companyPreTotal+totalAcc)/companyInstalls:null;
+  document.getElementById('stats-row').innerHTML=
+    `<div class="stat-card"><div class="stat-label">Workrooms</div><div class="stat-value">${visible.length}</div><div class="stat-sub">Visible for selected month</div></div>
+     <div class="stat-card"><div class="stat-label">Need Review</div><div class="stat-value">${needs}</div><div class="stat-sub">Review signal only</div></div>
+     <div class="stat-card"><div class="stat-label">Reviewed</div><div class="stat-value">${reviewed}</div><div class="stat-sub">Saved individually</div></div>
+     <div class="stat-card"><div class="stat-label">Setup Needed</div><div class="stat-value">${setup}</div><div class="stat-sub">Not yet in Workrooms list</div></div>
+     <div class="stat-card"><div class="stat-label">Total Waste Accrual</div><div class="stat-value">${money(totalAcc)}</div><div class="stat-sub">Entered for ${displayMonth(ym)}</div></div>
+     <div class="stat-card"><div class="stat-label">Company CPI After Accrual</div><div class="stat-value">${companyCPIAfter==null?'—':money(companyCPIAfter)}</div><div class="stat-sub">${companyInstalls.toLocaleString()} installs · updates as accruals are entered</div></div>`; 
+}
 function isWMSetup(r){return !!r.setup&&r.setup.method==='WM Method';}
 function setWMVendorFilter(f){
   wmVendorFilter=f;
@@ -907,6 +934,9 @@ async function saveInlineAccrual(key,input){
     assignField(body,historyFieldMap,'Review Notes',existing?.notes||'');
     assignField(body,historyFieldMap,'Reviewed Date',new Date().toISOString());
     await spWrite(HISTORY_LIST,existing?.id,body);
+    // Inline entry is intentionally a table-only workflow. Do not reopen a prior drawer.
+    selectedWorkroomKey='';
+    document.getElementById('detail-panel')?.classList.remove('open');
     await loadSharePoint();
     input=document.getElementById('inline-'+key);
     if(input)input.classList.add('saved');
@@ -1038,9 +1068,10 @@ async function markAccrualSubmitted(){
   const ym=document.getElementById('month-select').value||priorMonthISO();
   if(!workflowFieldsReady())return alert('The Waste Accrual History list still needs the month-end workflow columns. Run the SharePoint setup script supplied with this version, then refresh SharePoint.');
   if(!nsRows.length||!wmRows.length||!installsRows.length)return alert('Upload the NetSuite, WM Spend, and Completed Installs files before submitting the accrual.');
-  const active=reviewRows,missingSetup=active.filter(r=>!r.setup),unresolved=active.filter(r=>r.status==='Needs Review'&&!r.hist);
+  const active=reviewRows,missingSetup=active.filter(r=>!r.setup);
   if(missingSetup.length)return alert(`${missingSetup.length} workroom(s) still need setup before the accrual can be submitted.`);
-  if(unresolved.length)return alert(`${unresolved.length} workroom(s) still have an unresolved review trigger. Review and save those locations first.`);
+  // A blank Final Accrual means $0. Review signals are guidance, not mandatory tasks.
+  // Submission snapshots every workroom, including untouched review-signal rows, as $0 unless an accrual was entered.
   const entries=accrualEntriesForMonth(),total=entries.reduce((s,r)=>s+r.amount,0);
   if(!confirm(`Mark ${displayMonth(ym)} Accrual Submitted?\n\n${entries.length} accrual entries\nTotal Waste Accrual: ${money(total)}\n\nThis means the Utility Accrual spreadsheet has been sent to Accounting.`))return;
   const btn=document.getElementById('submit-month-btn');btn.disabled=true;btn.textContent='Saving snapshot…';
