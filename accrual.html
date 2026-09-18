@@ -28,6 +28,60 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 #error-box{display:none;background:var(--danger-light);border:1px solid #f0caca;color:var(--danger);border-radius:8px;padding:10px 12px;font-size:11px;margin-bottom:10px;line-height:1.45}
 @media(max-width:1100px){.stats-row{grid-template-columns:repeat(3,1fr)}.metric-grid{grid-template-columns:repeat(3,1fr)}.upload-strip{grid-template-columns:1fr}}
 @media(max-width:800px){.sidebar{width:135px}.detail-grid,.setup-grid{grid-template-columns:1fr}.stats-row{grid-template-columns:repeat(2,1fr)}.workflow-steps{grid-template-columns:1fr}.workflow-arrow{display:none}}
+
+/* Wide workroom review drawer */
+.detail-drawer{
+  position:fixed;
+  top:60px;
+  right:0;
+  bottom:0;
+  width:min(46vw,780px);
+  min-width:540px;
+  background:var(--surface);
+  border-left:1px solid var(--border);
+  box-shadow:-14px 0 34px rgba(0,0,0,.14);
+  z-index:1500;
+  transform:translateX(102%);
+  transition:transform .18s ease;
+  display:flex;
+  flex-direction:column;
+}
+.detail-drawer.open{transform:translateX(0)}
+.detail-drawer .detail-head{
+  flex:0 0 auto;
+  background:var(--surface2);
+  padding:14px 16px;
+}
+.detail-drawer .detail-body{
+  overflow:auto;
+  flex:1 1 auto;
+  padding:14px 16px 28px;
+}
+.detail-close{
+  border:1px solid var(--border);
+  background:var(--surface);
+  color:var(--text);
+  border-radius:6px;
+  width:32px;
+  height:32px;
+  cursor:pointer;
+  font-size:20px;
+  line-height:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.detail-drawer .metric-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+}
+@media(max-width:1100px){
+  .detail-drawer{width:92vw;min-width:0}
+}
+@media(max-width:700px){
+  .detail-drawer{width:100vw;top:54px}
+  .detail-drawer .metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js" crossorigin="anonymous"></script>
@@ -74,8 +128,11 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
           <input class="search-box" id="review-search" placeholder="Search workroom…" oninput="renderReviewTable()" style="width:220px">
         </div>
         <div class="table-wrap"><table><thead><tr><th class="sortable" onclick="setReviewSort('name')">Workroom<span class="sortmark" id="sort-name"></span></th><th class="sortable" style="text-align:right" onclick="setReviewSort('nsVendor')">Vendor Expense<span class="sortmark" id="sort-nsVendor"></span></th><th class="sortable" style="text-align:right" onclick="setReviewSort('reversal')">Prior Reversal<span class="sortmark" id="sort-reversal"></span></th><th class="sortable" style="text-align:right" onclick="setReviewSort('netExpense')">Net Expense<span class="sortmark" id="sort-netExpense"></span></th><th class="sortable" style="text-align:right" onclick="setReviewSort('wmSpend')">WM Spend<span class="sortmark" id="sort-wmSpend"></span></th><th class="sortable" style="text-align:right" onclick="setReviewSort('difference')">Difference<span class="sortmark" id="sort-difference"></span></th><th class="sortable" style="text-align:right" onclick="setReviewSort('installs')">Installs<span class="sortmark" id="sort-installs"></span></th><th class="sortable" style="text-align:right" onclick="setReviewSort('cpi')">Booked CPI<span class="sortmark" id="sort-cpi"></span></th><th class="sortable" onclick="setReviewSort('status')">Review Signals<span class="sortmark" id="sort-status"></span></th><th class="sortable" onclick="setReviewSort('status')">Status</th></tr></thead><tbody id="review-tbody"></tbody></table></div>
-        <div class="detail hidden" id="detail-panel">
-          <div class="detail-head"><div><div class="detail-title" id="detail-title"></div><div class="detail-sub" id="detail-sub"></div></div><div id="detail-status"></div></div>
+        <div class="detail-drawer" id="detail-panel">
+          <div class="detail-head">
+            <div><div class="detail-title" id="detail-title"></div><div class="detail-sub" id="detail-sub"></div></div>
+            <div style="display:flex;align-items:center;gap:8px"><div id="detail-status"></div><button class="detail-close" onclick="closeDetailDrawer()" title="Close">×</button></div>
+          </div>
           <div class="detail-body">
             <div id="detail-reason" class="reason-box"></div>
             <div id="wm-service-question" class="wm-question hidden"></div>
@@ -531,10 +588,10 @@ async function handleTableauFile(file){
     renderPostCloseValidation();renderMonthWorkflow();
   }catch(e){console.error(e);showError('Tableau CPI file could not be read: '+e.message);}
 }
-function clearMonthlyFiles(){nsRows=[];wmRows=[];wmIndex={totals:new Map(),months:new Map()};installsRows=[];tableauRows=[];tableauInfo=null;selectedWorkroomKey='';['ns-status','wm-status','inst-status'].forEach(id=>document.getElementById(id).textContent='Not loaded');document.getElementById('tableau-status').textContent='Not loaded';document.getElementById('detail-panel').classList.add('hidden');document.getElementById('postclose-validation').classList.add('hidden');buildReviewRows();renderMonthWorkflow();}
+function clearMonthlyFiles(){nsRows=[];wmRows=[];wmIndex={totals:new Map(),months:new Map()};installsRows=[];tableauRows=[];tableauInfo=null;selectedWorkroomKey='';['ns-status','wm-status','inst-status'].forEach(id=>document.getElementById(id).textContent='Not loaded');document.getElementById('tableau-status').textContent='Not loaded';document.getElementById('detail-panel').classList.remove('open');document.getElementById('postclose-validation').classList.add('hidden');buildReviewRows();renderMonthWorkflow();}
 function syncMonthSelectors(){const main=document.getElementById('month-select'),end=document.getElementById('month-end-select');if(main&&end)end.value=main.value||priorMonthISO();}
 function monthEndMonthChanged(v){const main=document.getElementById('month-select');if(main)main.value=v;monthChanged();}
-function monthChanged(){syncMonthSelectors();tableauRows=[];tableauInfo=null;selectedWorkroomKey='';document.getElementById('tableau-status').textContent='Not loaded';document.getElementById('detail-panel').classList.add('hidden');document.getElementById('postclose-validation').classList.add('hidden');buildReviewRows();renderMonthWorkflow();renderPostCloseValidation();}
+function monthChanged(){syncMonthSelectors();tableauRows=[];tableauInfo=null;selectedWorkroomKey='';document.getElementById('tableau-status').textContent='Not loaded';document.getElementById('detail-panel').classList.remove('open');document.getElementById('postclose-validation').classList.add('hidden');buildReviewRows();renderMonthWorkflow();renderPostCloseValidation();}
 
 function nsWorkroomName(v){return String(v||'').replace(/^\s*\d+[a-z]?\s*-\s*/i,'').trim();}
 function nsWorkroomKey(v){const n=nsWorkroomName(v);return /^corporate$/i.test(n)?'':norm(n);}
@@ -675,10 +732,13 @@ function renderReviewTable(){
   const ym=document.getElementById('month-select').value||priorMonthISO();
   tb.innerHTML=rows.length?rows.map(r=>{const closed=r.setup?.closedDate&&ymCompare(ym,r.setup.closedDate.slice(0,7))>=0?`<div style="margin-top:3px"><span class="pill gray">Closed ${esc(displayMonth(r.setup.closedDate.slice(0,7)))}</span></div>`:'';return `<tr class="${r.key===selectedWorkroomKey?'selected':''}" onclick="selectReviewRow('${r.key}')"><td class="workroom">${esc(r.name)}${closed}</td><td class="money">${money(r.nsVendor)}</td><td class="money">${money(r.reversal)}</td><td class="money">${money(r.netExpense)}</td><td class="money">${r.wmFound?money(r.wmSpend):'—'}</td><td class="money">${r.wmFound?money(r.difference):'—'}</td><td class="num">${r.installs?num(r.installs):'—'}</td><td class="money">${r.cpi==null?'—':money(r.cpi)}</td><td style="max-width:420px;white-space:normal">${r.trigger?esc(r.trigger):'<span class="pill gray">No signal</span>'}</td><td>${reviewStatusPill(r)}</td></tr>`}).join(''):`<tr><td colspan="10"><div class="empty">No workrooms match this view. Upload the monthly files or change the filter.</div></td></tr>`;
 }
+function closeDetailDrawer(){
+  document.getElementById('detail-panel')?.classList.remove('open');
+}
 function selectReviewRow(key){selectedWorkroomKey=key;renderReviewTable();const r=reviewRows.find(x=>x.key===key);if(r)openDetail(r);}
 function avgMetric(label,value){return `<div class="metric-card"><div class="k">${label}</div><div class="v">${value==null?'—':money(value)}</div></div>`;}
 function openDetail(r){
-  const p=document.getElementById('detail-panel');p.classList.remove('hidden');const ym=document.getElementById('month-select').value||priorMonthISO();document.getElementById('detail-title').textContent=r.name+' — '+displayMonth(ym);const setupParts=[];if(r.setup?.vendor)setupParts.push(`Primary vendor: ${r.setup.vendor}`);if(r.method)setupParts.push(`Setup method: ${r.method}`);if(r.setup?.closedDate)setupParts.push(`Closed: ${new Date(r.setup.closedDate+'T12:00:00').toLocaleDateString()}`);if(r.setup?.wmEndMonth)setupParts.push(`WM ended: ${displayMonth(r.setup.wmEndMonth)}`);if(r.setup?.rule)setupParts.push(`Rule: ${r.setup.rule}`);document.getElementById('detail-sub').textContent=setupParts.join(' · ');document.getElementById('detail-status').innerHTML=reviewStatusPill(r);document.getElementById('detail-reason').textContent=r.trigger||'No automatic review signal. You can still review or enter an accrual if the real-world situation requires it.';
+  const p=document.getElementById('detail-panel');p.classList.add('open');const ym=document.getElementById('month-select').value||priorMonthISO();document.getElementById('detail-title').textContent=r.name+' — '+displayMonth(ym);const setupParts=[];if(r.setup?.vendor)setupParts.push(`Primary vendor: ${r.setup.vendor}`);if(r.method)setupParts.push(`Setup method: ${r.method}`);if(r.setup?.closedDate)setupParts.push(`Closed: ${new Date(r.setup.closedDate+'T12:00:00').toLocaleDateString()}`);if(r.setup?.wmEndMonth)setupParts.push(`WM ended: ${displayMonth(r.setup.wmEndMonth)}`);if(r.setup?.rule)setupParts.push(`Rule: ${r.setup.rule}`);document.getElementById('detail-sub').textContent=setupParts.join(' · ');document.getElementById('detail-status').innerHTML=reviewStatusPill(r);document.getElementById('detail-reason').textContent=r.trigger||'No automatic review signal. You can still review or enter an accrual if the real-world situation requires it.';
   const q=document.getElementById('wm-service-question');if(wmRows.length&&r.wmExpected&&!r.wmFound&&!r.setup?.wmEndMonth){q.classList.remove('hidden');q.innerHTML=`<strong>No WM spend was found for ${esc(displayMonth(ym))}.</strong><br>Is this workroom still using Waste Management?<div class="wm-question-actions"><button class="btn" onclick="confirmWMStillActive('${r.key}')">Yes — still using WM</button><button class="btn primary" onclick="markWMEnded('${r.key}')">No — WM ended</button></div>`;}else{q.classList.add('hidden');q.innerHTML='';}
   document.getElementById('detail-metrics').innerHTML=`<div class="metric-card"><div class="k">Vendor Expense</div><div class="v">${money(r.nsVendor)}</div></div><div class="metric-card"><div class="k">Prior Reversal</div><div class="v">${money(r.reversal)}</div></div><div class="metric-card"><div class="k">Net Expense</div><div class="v">${money(r.netExpense)}</div></div><div class="metric-card"><div class="k">WM Spend</div><div class="v">${r.wmFound?money(r.wmSpend):'—'}</div></div><div class="metric-card"><div class="k">WM Difference</div><div class="v">${r.wmFound?money(r.difference):'—'}</div></div><div class="metric-card"><div class="k">Completed Installs</div><div class="v">${r.installs?num(r.installs):'—'}</div></div><div class="metric-card"><div class="k">Booked CPI</div><div class="v">${r.cpi==null?'—':money(r.cpi)}</div></div>${avgMetric('GL 3-Mo Avg',r.gl3)}${avgMetric('GL 12-Mo Avg',r.gl12)}${avgMetric('GL All-Time Avg',r.glAll)}${avgMetric('WM 3-Mo Avg',r.wm3)}${avgMetric('WM 12-Mo Avg',r.wm12)}${avgMetric('WM All-Time Avg',r.wmAll)}`;document.getElementById('decision-reason').value=r.hist?.reason||'';document.getElementById('review-notes').value=r.hist?.notes||'';document.getElementById('final-accrual').value=r.hist?String(r.hist.finalAccrual||0):'';refreshDecisionPreview();
 }
