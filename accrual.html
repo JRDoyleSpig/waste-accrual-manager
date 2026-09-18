@@ -155,6 +155,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
           <button class="btn" id="filter-review" onclick="setReviewFilter('review')">Needs Review</button>
           <button class="btn primary" id="filter-all" onclick="setReviewFilter('all')">All Workrooms</button>
           <button class="btn" id="filter-unassigned" onclick="setReviewFilter('unassigned')">Setup Needed</button>
+          <span style="display:inline-block;width:1px;height:26px;background:var(--border);vertical-align:middle;margin:0 5px"></span>
+          <button class="btn primary" id="wmfilter-all" onclick="setWMVendorFilter('all')">All Vendors</button>
+          <button class="btn" id="wmfilter-wm" onclick="setWMVendorFilter('wm')">WM</button>
+          <button class="btn" id="wmfilter-nonwm" onclick="setWMVendorFilter('nonwm')">Non-WM</button>
           <div class="spacer"></div>
           <input class="search-box" id="review-search" placeholder="Search workroom…" oninput="renderReviewTable()" style="width:220px">
         </div>
@@ -326,7 +330,7 @@ const SP_SITE="https://serviceprosgroup.sharepoint.com/sites/PropertyManagement"
 const SP_SCOPES=["https://serviceprosgroup.sharepoint.com/AllSites.Write"];
 const WORKROOM_LIST=SP_SITE+"/_api/web/lists/getbytitle('Waste%20Accrual%20Workrooms')";
 const HISTORY_LIST=SP_SITE+"/_api/web/lists/getbytitle('Waste%20Accrual%20History')";
-let msalApp=null,tokenCache=null,workrooms=[],historyRows=[],monthRecords=[],nsRows=[],wmRows=[],installsRows=[],tableauRows=[],tableauInfo=null,reviewRows=[],selectedWorkroomKey='',reviewFilter='all',reviewSort={key:'name',dir:1},editingWorkroomId=null,workroomFieldMap={},historyFieldMap={},wmPendingImport=null,wmIndex={totals:new Map(),months:new Map()};
+let msalApp=null,tokenCache=null,workrooms=[],historyRows=[],monthRecords=[],nsRows=[],wmRows=[],installsRows=[],tableauRows=[],tableauInfo=null,reviewRows=[],selectedWorkroomKey='',reviewFilter='all',wmVendorFilter='all',reviewSort={key:'name',dir:1},editingWorkroomId=null,workroomFieldMap={},historyFieldMap={},wmPendingImport=null,wmIndex={totals:new Map(),months:new Map()};
 const DEFAULT_WASTE_ACCOUNT='6701 Utilities : Utilities - Trash/Dumpsters';
 
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -821,11 +825,24 @@ function reviewStatusPill(r){if(r.status==='Reviewed')return'<span class="pill g
 function methodPill(m){if(m==='WM Method')return'<span class="pill blue">WM Method</span>';if(m==='Special')return'<span class="pill warn">Special</span>';if(m==='Direct Vendor')return'<span class="pill gray">Direct Vendor</span>';return'<span class="pill red">Setup Needed</span>';}
 function renderReview(){renderStats();renderReviewTable();renderAccrualEntries();if(selectedWorkroomKey){const r=reviewRows.find(x=>x.key===selectedWorkroomKey);if(r)openDetail(r);}}
 function renderStats(){const visible=reviewRows,needs=visible.filter(r=>r.status==='Needs Review').length,reviewed=visible.filter(r=>r.status==='Reviewed').length,setup=visible.filter(r=>!r.setup).length,totalAcc=historyRows.filter(h=>h.month===(document.getElementById('month-select').value||priorMonthISO())).reduce((s,h)=>s+h.finalAccrual,0);document.getElementById('stats-row').innerHTML=`<div class="stat-card"><div class="stat-label">Workrooms</div><div class="stat-value">${visible.length}</div><div class="stat-sub">Visible for selected month</div></div><div class="stat-card"><div class="stat-label">Need Review</div><div class="stat-value">${needs}</div><div class="stat-sub">Trigger requires judgment</div></div><div class="stat-card"><div class="stat-label">Reviewed</div><div class="stat-value">${reviewed}</div><div class="stat-sub">Saved to history</div></div><div class="stat-card"><div class="stat-label">Setup Needed</div><div class="stat-value">${setup}</div><div class="stat-sub">Not yet in Workrooms list</div></div><div class="stat-card"><div class="stat-label">Total Waste Accrual</div><div class="stat-value">${money(totalAcc)}</div><div class="stat-sub">Saved for ${displayMonth(document.getElementById('month-select').value||priorMonthISO())}</div></div>`;}
+function isWMSetup(r){return !!r.setup&&r.setup.method==='WM Method';}
+function setWMVendorFilter(f){
+  wmVendorFilter=f;
+  ['all','wm','nonwm'].forEach(x=>document.getElementById('wmfilter-'+x)?.classList.toggle('primary',x===f));
+  renderReviewTable();
+}
 function setReviewFilter(f){reviewFilter=f;['review','all','unassigned'].forEach(x=>document.getElementById('filter-'+x).classList.toggle('primary',x===f));renderReviewTable();}
 function setReviewSort(key){if(reviewSort.key===key)reviewSort.dir*=-1;else reviewSort={key,dir:key==='name'?1:-1};renderReviewTable();}
 function sortValue(r,key){if(key==='status')return r.status==='Needs Review'?0:r.status==='OK'?1:2;const v=r[key];return v==null?(typeof v==='string'?'':-Infinity):v;}
 function renderReviewTable(){
-  const q=norm(document.getElementById('review-search').value),tb=document.getElementById('review-tbody');let rows=[...reviewRows];if(reviewFilter==='review')rows=rows.filter(r=>r.status==='Needs Review');if(reviewFilter==='unassigned')rows=rows.filter(r=>!r.setup);if(q)rows=rows.filter(r=>norm(r.name).includes(q));
+  const q=norm(document.getElementById('review-search').value),tb=document.getElementById('review-tbody');let rows=[...reviewRows];
+  if(reviewFilter==='review')rows=rows.filter(r=>r.status==='Needs Review');
+  if(reviewFilter==='unassigned')rows=rows.filter(r=>!r.setup);
+  if(reviewFilter!=='unassigned'){
+    if(wmVendorFilter==='wm')rows=rows.filter(r=>isWMSetup(r));
+    else if(wmVendorFilter==='nonwm')rows=rows.filter(r=>r.setup&&!isWMSetup(r));
+  }
+  if(q)rows=rows.filter(r=>norm(r.name).includes(q));
   rows.sort((a,b)=>{const av=sortValue(a,reviewSort.key),bv=sortValue(b,reviewSort.key);if(typeof av==='string')return av.localeCompare(bv)*reviewSort.dir;return ((av??0)-(bv??0))*reviewSort.dir||a.name.localeCompare(b.name);});
   document.querySelectorAll('.sortmark').forEach(x=>x.textContent='');const mark=document.getElementById('sort-'+reviewSort.key);if(mark)mark.textContent=reviewSort.dir===1?'▲':'▼';
   const ym=document.getElementById('month-select').value||priorMonthISO();
