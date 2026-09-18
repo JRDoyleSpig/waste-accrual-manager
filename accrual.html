@@ -90,6 +90,29 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
   font-weight:700;
 }
 
+
+.inline-accrual{
+  width:96px;
+  text-align:right;
+  font-family:var(--mono);
+  font-size:12px;
+  border:1px solid var(--border);
+  border-radius:5px;
+  padding:6px 7px;
+  background:var(--surface);
+}
+.inline-accrual:focus{outline:2px solid rgba(18,86,164,.18);border-color:var(--blue)}
+.inline-accrual.saved{border-color:#1d7a5f;background:#f2fbf7}
+.prior-accruals{font-size:10px;line-height:1.5;white-space:nowrap;color:var(--muted)}
+.reco-amt{font-family:var(--mono);font-weight:700}
+.reco-none{color:var(--muted);font-size:11px}
+.workbook-alert{background:#FFC7CE !important;color:#9C0006 !important;font-weight:700}
+.detail-history-strip{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px;margin:10px 0 14px}
+.detail-history-chip{border:1px solid var(--border);border-radius:6px;padding:8px;background:var(--surface2)}
+.detail-history-chip .m{font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:.04em}
+.detail-history-chip .a{font-family:var(--mono);font-weight:700;margin-top:3px}
+@media(max-width:1100px){.detail-history-strip{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js" crossorigin="anonymous"></script>
@@ -135,7 +158,20 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
           <div class="spacer"></div>
           <input class="search-box" id="review-search" placeholder="Search workroom…" oninput="renderReviewTable()" style="width:220px">
         </div>
-        <div class="table-wrap"><table><thead><tr><th class="sortable" onclick="setReviewSort('name')">Workroom<span class="sortmark" id="sort-name"></span></th><th class="sortable" style="text-align:right" onclick="setReviewSort('amountBilled')">Amount Billed<span class="sortmark" id="sort-amountBilled"></span></th><th class="sortable" style="text-align:right" onclick="setReviewSort('reversal')">PM Reversal<span class="sortmark" id="sort-reversal"></span></th><th class="sortable" style="text-align:right" onclick="setReviewSort('accrual')">Accrual<span class="sortmark" id="sort-accrual"></span></th><th class="sortable" style="text-align:right" onclick="setReviewSort('total')">Total<span class="sortmark" id="sort-total"></span></th><th class="sortable" style="text-align:right" onclick="setReviewSort('cpi')">Cost Per Install<span class="sortmark" id="sort-cpi"></span></th><th class="sortable" style="text-align:right" onclick="setReviewSort('wmSpend')">WM Total<span class="sortmark" id="sort-wmSpend"></span></th><th class="sortable" style="text-align:right" onclick="setReviewSort('cpiAfterAccrual')">CPI After Accrual<span class="sortmark" id="sort-cpiAfterAccrual"></span></th><th class="sortable" onclick="setReviewSort('status')">Review Signals<span class="sortmark" id="sort-status"></span></th><th class="sortable" onclick="setReviewSort('status')">Status</th></tr></thead><tbody id="review-tbody"></tbody></table></div>
+        <div class="table-wrap"><table><thead><tr>
+<th class="sortable" onclick="setReviewSort('name')">Workroom<span class="sortmark" id="sort-name"></span></th>
+<th class="sortable" style="text-align:right" onclick="setReviewSort('amountBilled')">Amount Billed<span class="sortmark" id="sort-amountBilled"></span></th>
+<th class="sortable" style="text-align:right" onclick="setReviewSort('reversal')">PM Reversal<span class="sortmark" id="sort-reversal"></span></th>
+<th class="sortable" style="text-align:right" onclick="setReviewSort('preTotal')">Pre-Accrual Total<span class="sortmark" id="sort-preTotal"></span></th>
+<th class="sortable" style="text-align:right" onclick="setReviewSort('cpi')">CPI Before<span class="sortmark" id="sort-cpi"></span></th>
+<th class="sortable" style="text-align:right" onclick="setReviewSort('wmSpend')">WM Total<span class="sortmark" id="sort-wmSpend"></span></th>
+<th class="sortable" style="text-align:right" onclick="setReviewSort('recommendedAccrual')">Recommended Accrual<span class="sortmark" id="sort-recommendedAccrual"></span></th>
+<th>Previous Accruals</th>
+<th style="text-align:right">Final Accrual</th>
+<th class="sortable" style="text-align:right" onclick="setReviewSort('cpiAfterAccrual')">CPI After<span class="sortmark" id="sort-cpiAfterAccrual"></span></th>
+<th class="sortable" onclick="setReviewSort('status')">Review Signals<span class="sortmark" id="sort-status"></span></th>
+<th class="sortable" onclick="setReviewSort('status')">Status</th>
+</tr></thead><tbody id="review-tbody"></tbody></table></div>
         <div class="detail-drawer" id="detail-panel">
           <div class="detail-head">
             <div><div class="detail-title" id="detail-title"></div><div class="detail-sub" id="detail-sub"></div></div>
@@ -603,7 +639,7 @@ function monthChanged(){syncMonthSelectors();tableauRows=[];tableauInfo=null;sel
 
 function nsWorkroomName(v){return String(v||'').replace(/^\s*\d+[a-z]?\s*-\s*/i,'').trim();}
 function nsWorkroomKey(v){const n=nsWorkroomName(v);return /^corporate$/i.test(n)?'':norm(n);}
-function nsSummaryFor(key,ym){
+function nsSummaryFor(key,ym,includeAccrual=true){
   const period=monthPeriod(ym);let vendor=0,rev=0,accrual=0,found=false;
   for(const r of nsRows){
     const wk=nsWorkroomKey(col(r,'Workroom')),rp=String(col(r,'Period')||'').trim();
@@ -616,8 +652,8 @@ function nsSummaryFor(key,ym){
     else if(memo==='accrual')accrual+=a;
     else vendor+=a;
   }
-  const total=vendor+rev+accrual;
-  return{vendor,reversal:rev,accrual,found,total,net:total};
+  const preTotal=vendor+rev,total=preTotal+(includeAccrual?accrual:0);
+  return{vendor,reversal:rev,accrual,found,preTotal,total,net:total};
 }
 function shiftYM(ym,delta){const [y,m]=ym.split('-').map(Number),d=new Date(Date.UTC(y,m-1+delta,1));return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}`;}
 function ymCompare(a,b){return String(a||'').localeCompare(String(b||''));}
@@ -689,18 +725,55 @@ function installsFor(key){for(const r of installsRows){const vals=Object.values(
 function historicalFor(key,ym){return historyRows.find(h=>norm(h.name)===key&&h.month===ym)||null;}
 function setupFor(key){return workrooms.find(w=>norm(w.name)===key)||null;}
 function workroomVisibleForMonth(setup,ym){if(!setup)return true;if(setup.closedDate){const closeYm=setup.closedDate.slice(0,7);return ymCompare(ym,shiftYM(closeYm,2))<=0;}return setup.active!==false;}
-function wmExpectedForMonth(setup,key,ym){if(!wmRows.length)return false;if(setup?.wmEndMonth&&ymCompare(ym,setup.wmEndMonth)>0)return false;return setup?.method==='WM Method'||wmObservedMonths(key).some(m=>ymCompare(m,ym)<0);}
+function wmExpectedForMonth(setup,key,ym){
+  if(!wmRows.length)return false;
+  if(setup?.wmEndMonth&&ymCompare(ym,setup.wmEndMonth)>0)return false;
+  if(setup){
+    if(setup.method==='WM Method')return true;
+    if(setup.method==='Direct Vendor'||setup.method==='Special')return false;
+  }
+  return wmObservedMonths(key).some(m=>ymCompare(m,ym)<0);
+}
 function inferredNames(){const m=new Map();for(const r of nsRows){const raw=col(r,'Workroom'),n=nsWorkroomName(raw),k=nsWorkroomKey(raw);if(n&&k)m.set(k,n);}for(const r of wmRows){
     const rawKey=wmRuleKey(col(r,'Location Name'));
     if(WM_EXCLUDE_CURRENT.has(rawKey)||WM_HISTORICAL_ONLY.has(rawKey))continue;
     const wk=wmRowKey(r),setup=setupFor(wk),raw=wmCleanLocationName(col(r,'Location Name'));
     if(wk)m.set(wk,setup?.name||(raw||wk));
   }for(const r of installsRows){const name=String(Object.values(r)[0]||'').trim();if(name&&!/grand total/i.test(name)&&norm(name))m.set(norm(name),name);}for(const w of workrooms)if(w.name)m.set(norm(w.name),w.name);return m;}
+
+function priorAccrualHistory(key,ym,count=6){
+  const out=[];
+  for(let i=1;i<=count;i++){
+    const m=shiftYM(ym,-i),s=nsSummaryFor(key,m,true);
+    out.push({month:m,amount:s.accrual||0});
+  }
+  return out;
+}
+function recommendAccrual(setup,wm,preTotal,gl3,gl12,glAll){
+  // Only make a dollar recommendation where the evidence provides a clear amount.
+  // WM catch-up is a starting point, never a forced accrual.
+  if(setup?.method==='WM Method'&&wm.found){
+    const gap=wm.total-preTotal;
+    if(gap>=1000)return {amount:Math.max(0,gap),basis:'WM gap'};
+  }
+  return {amount:null,basis:''};
+}
+function workbookTotalAlert(v){
+  // Matches the August Accrual Summary conditional formatting on Total:
+  // negative, zero, and positive values under $90 all use the workbook warning style.
+  return Number(v)<90;
+}
+function priorAccrualsHTML(items){
+  const nonzero=items.filter(x=>x.amount!==0);
+  if(!nonzero.length)return '<span class="reco-none">None in prior 6 mo.</span>';
+  return `<div class="prior-accruals">${items.slice(0,3).map(x=>`${displayMonth(x.month).slice(0,3)} ${money(x.amount)}`).join(' · ')}</div>`;
+}
+
 function buildReviewRows(){
   const ym=document.getElementById('month-select').value||priorMonthISO(),names=inferredNames();reviewRows=[];
   for(const [key,name] of names){
     const setup=setupFor(key);if(!workroomVisibleForMonth(setup,ym))continue;
-    const ns=nsSummaryFor(key,ym),wm=wmSummaryFor(key,ym),inst=installsFor(key),hist=historicalFor(key,ym),method=setup?.method||(wm.found?'WM Method':'Unassigned'),diff=wm.total-ns.total,total=ns.total,priorCPI=priorHistoryCPIAverage(key,ym,3),cpi=inst?total/inst:null;
+    const ns=nsSummaryFor(key,ym,false),wm=wmSummaryFor(key,ym),inst=installsFor(key),hist=historicalFor(key,ym),method=setup?.method||(wm.found?'WM Method':'Unassigned'),preTotal=ns.preTotal,diff=wm.total-preTotal,priorCPI=priorHistoryCPIAverage(key,ym,3),cpi=inst?preTotal/inst:null;
     const gl3=monthlyAverage('gl',key,ym,3),gl12=monthlyAverage('gl',key,ym,12),glAll=monthlyAverage('gl',key,ym,null);
     const wm3=monthlyAverage('wm',key,ym,3,setup?.wmEndMonth||''),wm12=monthlyAverage('wm',key,ym,12,setup?.wmEndMonth||''),wmAll=monthlyAverage('wm',key,ym,null,setup?.wmEndMonth||'');
     const wmExpected=wmExpectedForMonth(setup,key,ym),triggers=[];
@@ -712,7 +785,7 @@ function buildReviewRows(){
     if(ns.vendor===0&&(inst>0||(gl3||0)>=250||(gl12||0)>=250||(glAll||0)>=250))triggers.push('No current vendor expense');
 
     const glBaselines=[['3-month',gl3],['12-month',gl12],['all-time',glAll]].filter(x=>x[1]!=null&&x[1]>=500);
-    const glLow=glBaselines.filter(([,avg])=>total<avg*0.6&&(avg-total)>=500);
+    const glLow=glBaselines.filter(([,avg])=>preTotal<avg*0.6&&(avg-preTotal)>=500);
     if(glLow.length){
       const labels=glLow.map(x=>x[0]).join(', ');
       const strongest=glLow.length>=2?'Booked GL Total materially below GL history':'Booked GL Total materially below GL average';
@@ -734,12 +807,13 @@ function buildReviewRows(){
     }
 
     if(ns.reversal<0&&Math.abs(ns.reversal)>ns.vendor)triggers.push('Prior accrual reversal exceeds current vendor expense');
-    if(ns.accrual>0)triggers.push(`NetSuite accrual already posted: ${money(ns.accrual)}`);
-    if(total<=0&&(ns.vendor!==0||ns.reversal!==0||ns.accrual!==0))triggers.push(`Booked GL Total is ${money(total)}`);
+    
+    if(preTotal<=0&&(ns.vendor!==0||ns.reversal!==0))triggers.push(`Pre-accrual GL Total is ${money(preTotal)}`);
     if(cpi!=null&&priorCPI!=null&&priorCPI>0&&cpi<priorCPI*0.5)triggers.push(`CPI well below recent history (${money(priorCPI)})`);
     const automatic=triggers.length>0,status=hist?.status==='Reviewed'?'Reviewed':automatic?'Needs Review':'OK';
-    const cpiAfterAccrual=inst?(hist?.finalAccrual>0?(ns.vendor+ns.reversal+hist.finalAccrual)/inst:cpi):null;
-    reviewRows.push({key,name:setup?.name||name,number:setup?.number||'',setup,method,amountBilled:ns.vendor,nsVendor:ns.vendor,reversal:ns.reversal,accrual:ns.accrual,total,netExpense:total,gl3,gl12,glAll,wm3,wm12,wmAll,wmSpend:wm.total,wmFound:wm.found,wmExpected,difference:diff,installs:inst,cpi,cpiAfterAccrual,priorCPI,trigger:triggers.join(' · '),status,hist});
+    const recommendation=recommendAccrual(setup,wm,preTotal,gl3,gl12,glAll),priorAccruals=priorAccrualHistory(key,ym,6);
+    const finalSaved=Number(hist?.finalAccrual||0),cpiAfterAccrual=inst?(preTotal+finalSaved)/inst:null;
+    reviewRows.push({key,name:setup?.name||name,number:setup?.number||'',setup,method,amountBilled:ns.vendor,nsVendor:ns.vendor,reversal:ns.reversal,postedAccrual:ns.accrual,preTotal,total:preTotal,netExpense:preTotal,gl3,gl12,glAll,wm3,wm12,wmAll,wmSpend:wm.total,wmFound:wm.found,wmExpected,difference:diff,installs:inst,cpi,cpiAfterAccrual,priorCPI,recommendedAccrual:recommendation.amount,recommendationBasis:recommendation.basis,priorAccruals,trigger:triggers.join(' · '),status,hist});
   }
   renderReview();
 }
@@ -755,8 +829,65 @@ function renderReviewTable(){
   rows.sort((a,b)=>{const av=sortValue(a,reviewSort.key),bv=sortValue(b,reviewSort.key);if(typeof av==='string')return av.localeCompare(bv)*reviewSort.dir;return ((av??0)-(bv??0))*reviewSort.dir||a.name.localeCompare(b.name);});
   document.querySelectorAll('.sortmark').forEach(x=>x.textContent='');const mark=document.getElementById('sort-'+reviewSort.key);if(mark)mark.textContent=reviewSort.dir===1?'▲':'▼';
   const ym=document.getElementById('month-select').value||priorMonthISO();
-  tb.innerHTML=rows.length?rows.map(r=>{const closed=r.setup?.closedDate&&ymCompare(ym,r.setup.closedDate.slice(0,7))>=0?`<div style="margin-top:3px"><span class="pill gray">Closed ${esc(displayMonth(r.setup.closedDate.slice(0,7)))}</span></div>`:'';return `<tr class="${r.key===selectedWorkroomKey?'selected':''}" onclick="selectReviewRow('${r.key}')"><td class="workroom">${esc(r.name)}${closed}</td><td class="money">${money(r.amountBilled)}</td><td class="money">${money(r.reversal)}</td><td class="money">${money(r.accrual)}</td><td class="money ${r.total<90?'workbook-low':''}" title="${r.total<90?'Matches workbook conditional formatting: Total is under $90':''}">${money(r.total)}</td><td class="money">${r.cpi==null?'—':money(r.cpi)}</td><td class="money">${r.wmFound?money(r.wmSpend):'—'}</td><td class="money">${r.cpiAfterAccrual==null?'—':money(r.cpiAfterAccrual)}</td><td style="max-width:420px;white-space:normal">${r.trigger?esc(r.trigger):'<span class="pill gray">No signal</span>'}</td><td>${reviewStatusPill(r)}</td></tr>`}).join(''):`<tr><td colspan="10"><div class="empty">No workrooms match this view. Upload the monthly files or change the filter.</div></td></tr>`;
+  tb.innerHTML=rows.length?rows.map(r=>{const closed=r.setup?.closedDate&&ymCompare(ym,r.setup.closedDate.slice(0,7))>=0?`<div style="margin-top:3px"><span class="pill gray">Closed ${esc(displayMonth(r.setup.closedDate.slice(0,7)))}</span></div>`:'';return `<tr class="${r.key===selectedWorkroomKey?'selected':''}" onclick="selectReviewRow('${r.key}')">
+<td class="workroom">${esc(r.name)}${closed}</td>
+<td class="money">${money(r.amountBilled)}</td>
+<td class="money">${money(r.reversal)}</td>
+<td class="money ${workbookTotalAlert(r.preTotal)?'workbook-alert':''}" title="${workbookTotalAlert(r.preTotal)?'Matches August workbook Total warning (< $90, including zero/negative)':''}">${money(r.preTotal)}</td>
+<td class="money">${r.cpi==null?'—':money(r.cpi)}</td>
+<td class="money">${r.wmFound?money(r.wmSpend):'—'}</td>
+<td class="money">${r.recommendedAccrual==null?'<span class="reco-none">Review</span>':`<span class="reco-amt">${money(r.recommendedAccrual)}</span>`}</td>
+<td>${priorAccrualsHTML(r.priorAccruals)}</td>
+<td class="money" onclick="event.stopPropagation()"><input class="inline-accrual ${r.hist?'saved':''}" id="inline-${r.key}" type="number" min="0" step="0.01" value="${r.hist?Number(r.hist.finalAccrual||0).toFixed(2):''}" placeholder="${r.recommendedAccrual==null?'0.00':Number(r.recommendedAccrual).toFixed(2)}" oninput="previewInlineAccrual('${r.key}',this)" onkeydown="inlineAccrualKey(event,'${r.key}',this)"></td>
+<td class="money" id="cpi-after-${r.key}">${r.cpiAfterAccrual==null?'—':money(r.cpiAfterAccrual)}</td>
+<td style="max-width:420px;white-space:normal">${r.trigger?esc(r.trigger):'<span class="pill gray">No signal</span>'}</td>
+<td>${reviewStatusPill(r)}</td></tr>`}).join(''):`<tr><td colspan="12"><div class="empty">No workrooms match this view. Upload the monthly files or change the filter.</div></td></tr>`;
 }
+
+function previewInlineAccrual(key,input){
+  const r=reviewRows.find(x=>x.key===key),el=document.getElementById('cpi-after-'+key);
+  if(!r||!el)return;
+  const final=parseAmount(input.value);
+  el.textContent=r.installs?money((r.preTotal+final)/r.installs):'—';
+  input.classList.remove('saved');
+}
+function inlineAccrualKey(ev,key,input){
+  if(ev.key!=='Enter')return;
+  ev.preventDefault();ev.stopPropagation();
+  saveInlineAccrual(key,input);
+}
+async function saveInlineAccrual(key,input){
+  const r=reviewRows.find(x=>x.key===key);if(!r)return;
+  if(!r.setup)return alert('This workroom needs setup before its accrual can be saved.');
+  const ym=document.getElementById('month-select').value||priorMonthISO(),final=parseAmount(input.value);
+  input.disabled=true;
+  try{
+    const et=await listEntityType(HISTORY_LIST),existing=historicalFor(r.key,ym),body={__metadata:{type:et},Title:`${ym}-${r.setup.number||r.name}`};
+    assignField(body,historyFieldMap,'Workroom Name',r.setup.name);
+    assignField(body,historyFieldMap,'Workroom Number',r.setup.number||'');
+    assignField(body,historyFieldMap,'Accrual Month',ym+'-01T12:00:00Z');
+    assignField(body,historyFieldMap,'Waste Method',r.method);
+    assignField(body,historyFieldMap,'Review Status','Reviewed');
+    assignField(body,historyFieldMap,'Review Trigger',r.trigger||'');
+    assignField(body,historyFieldMap,'NetSuite Vendor Expense',r.amountBilled);
+    assignField(body,historyFieldMap,'Prior Accrual Reversal',r.reversal);
+    assignField(body,historyFieldMap,'WM / Expected Spend',r.wmSpend);
+    assignField(body,historyFieldMap,'Difference',r.wmFound?r.difference:0);
+    assignField(body,historyFieldMap,'Completed Installs',r.installs);
+    assignField(body,historyFieldMap,'CPI',r.cpi||0);
+    assignField(body,historyFieldMap,'Final Accrual',final);
+    assignField(body,historyFieldMap,'Accrual Decision',final>0?'Accrual Entered':'No Accrual');
+    assignField(body,historyFieldMap,'Decision Reason',existing?.reason||r.recommendationBasis||'');
+    assignField(body,historyFieldMap,'Review Notes',existing?.notes||'');
+    assignField(body,historyFieldMap,'Reviewed Date',new Date().toISOString());
+    await spWrite(HISTORY_LIST,existing?.id,body);
+    await loadSharePoint();
+    input=document.getElementById('inline-'+key);
+    if(input)input.classList.add('saved');
+  }catch(e){console.error(e);alert('Could not save accrual: '+e.message);}
+  finally{const el=document.getElementById('inline-'+key);if(el)el.disabled=false;}
+}
+
 function closeDetailDrawer(){
   document.getElementById('detail-panel')?.classList.remove('open');
 }
@@ -765,7 +896,11 @@ function avgMetric(label,value){return `<div class="metric-card"><div class="k">
 function openDetail(r){
   const p=document.getElementById('detail-panel');p.classList.add('open');const ym=document.getElementById('month-select').value||priorMonthISO();document.getElementById('detail-title').textContent=r.name+' — '+displayMonth(ym);const setupParts=[];if(r.setup?.vendor)setupParts.push(`Primary vendor: ${r.setup.vendor}`);if(r.method)setupParts.push(`Setup method: ${r.method}`);if(r.setup?.closedDate)setupParts.push(`Closed: ${new Date(r.setup.closedDate+'T12:00:00').toLocaleDateString()}`);if(r.setup?.wmEndMonth)setupParts.push(`WM ended: ${displayMonth(r.setup.wmEndMonth)}`);if(r.setup?.rule)setupParts.push(`Rule: ${r.setup.rule}`);document.getElementById('detail-sub').textContent=setupParts.join(' · ');document.getElementById('detail-status').innerHTML=reviewStatusPill(r);document.getElementById('detail-reason').textContent=r.trigger||'No automatic review signal. You can still review or enter an accrual if the real-world situation requires it.';
   const q=document.getElementById('wm-service-question');if(wmRows.length&&r.wmExpected&&!r.wmFound&&!r.setup?.wmEndMonth){q.classList.remove('hidden');q.innerHTML=`<strong>No WM spend was found for ${esc(displayMonth(ym))}.</strong><br>Is this workroom still using Waste Management?<div class="wm-question-actions"><button class="btn" onclick="confirmWMStillActive('${r.key}')">Yes — still using WM</button><button class="btn primary" onclick="markWMEnded('${r.key}')">No — WM ended</button></div>`;}else{q.classList.add('hidden');q.innerHTML='';}
-  document.getElementById('detail-metrics').innerHTML=`<div class="metric-card"><div class="k">Amount Billed</div><div class="v">${money(r.amountBilled)}</div></div><div class="metric-card"><div class="k">PM Reversal</div><div class="v">${money(r.reversal)}</div></div><div class="metric-card"><div class="k">Accrual</div><div class="v">${money(r.accrual)}</div></div><div class="metric-card"><div class="k">Total</div><div class="v ${r.total<90?'workbook-low':''}">${money(r.total)}</div></div><div class="metric-card"><div class="k">Cost Per Install</div><div class="v">${r.cpi==null?'—':money(r.cpi)}</div></div><div class="metric-card"><div class="k">WM Total</div><div class="v">${r.wmFound?money(r.wmSpend):'—'}</div></div><div class="metric-card"><div class="k">WM vs GL Gap</div><div class="v">${r.wmFound?money(r.difference):'—'}</div></div><div class="metric-card"><div class="k">Completed Installs</div><div class="v">${r.installs?num(r.installs):'—'}</div></div><div class="metric-card"><div class="k">CPI After Accrual</div><div class="v" id="cpi-after-accrual-metric">${r.cpiAfterAccrual==null?'—':money(r.cpiAfterAccrual)}</div></div>${avgMetric('GL 3-Mo Avg',r.gl3)}${avgMetric('GL 12-Mo Avg',r.gl12)}${avgMetric('GL All-Time Avg',r.glAll)}${avgMetric('WM 3-Mo Avg',r.wm3)}${avgMetric('WM 12-Mo Avg',r.wm12)}${avgMetric('WM All-Time Avg',r.wmAll)}`;document.getElementById('decision-reason').value=r.hist?.reason||'';document.getElementById('review-notes').value=r.hist?.notes||'';document.getElementById('final-accrual').value=r.hist?String(r.hist.finalAccrual||0):'';refreshDecisionPreview();
+  document.getElementById('detail-metrics').innerHTML=`<div class="metric-card"><div class="k">Amount Billed</div><div class="v">${money(r.amountBilled)}</div></div><div class="metric-card"><div class="k">PM Reversal</div><div class="v">${money(r.reversal)}</div></div><div class="metric-card"><div class="k">Pre-Accrual Total</div><div class="v ${workbookTotalAlert(r.preTotal)?'workbook-alert':''}">${money(r.preTotal)}</div></div><div class="metric-card"><div class="k">CPI Before</div><div class="v">${r.cpi==null?'—':money(r.cpi)}</div></div><div class="metric-card"><div class="k">WM Total</div><div class="v">${r.wmFound?money(r.wmSpend):'—'}</div></div><div class="metric-card"><div class="k">WM vs GL Gap</div><div class="v">${r.wmFound?money(r.difference):'—'}</div></div><div class="metric-card"><div class="k">Recommended Accrual</div><div class="v">${r.recommendedAccrual==null?'Review':money(r.recommendedAccrual)}</div></div><div class="metric-card"><div class="k">Completed Installs</div><div class="v">${r.installs?num(r.installs):'—'}</div></div><div class="metric-card"><div class="k">CPI After Accrual</div><div class="v" id="cpi-after-accrual-metric">${r.cpiAfterAccrual==null?'—':money(r.cpiAfterAccrual)}</div></div>${avgMetric('GL 3-Mo Avg',r.gl3)}${avgMetric('GL 12-Mo Avg',r.gl12)}${avgMetric('GL All-Time Avg',r.glAll)}${avgMetric('WM 3-Mo Avg',r.wm3)}${avgMetric('WM 12-Mo Avg',r.wm12)}${avgMetric('WM All-Time Avg',r.wmAll)}`;document.querySelector('#detail-panel .detail-history-strip')?.remove();const histHost=document.getElementById('detail-metrics');
+  if(histHost){
+    histHost.insertAdjacentHTML('afterend',`<div class="detail-history-strip">${r.priorAccruals.map(x=>`<div class="detail-history-chip"><div class="m">${displayMonth(x.month)}</div><div class="a">${money(x.amount)}</div></div>`).join('')}</div>`);
+  }
+  document.getElementById('decision-reason').value=r.hist?.reason||'';document.getElementById('review-notes').value=r.hist?.notes||'';document.getElementById('final-accrual').value=r.hist?String(r.hist.finalAccrual||0):(r.recommendedAccrual==null?'':String(Number(r.recommendedAccrual).toFixed(2)));refreshDecisionPreview();
 }
 async function confirmWMStillActive(key){const r=reviewRows.find(x=>x.key===key);if(!r)return;alert('WM will remain active for this workroom. The missing WM spend stays as a review signal for this month so it cannot be overlooked.');}
 async function markWMEnded(key){const r=reviewRows.find(x=>x.key===key);if(!r?.setup)return alert('Save the workroom setup first.');if(!workroomFieldMap['WM End Month'])return alert('The SharePoint field "WM End Month" has not been added yet. Run the setup script provided with this build, refresh SharePoint, and try again.');const ym=document.getElementById('month-select').value||priorMonthISO();if(!confirm(`Mark Waste Management as ended for ${r.name} in ${displayMonth(ym)}? Historical WM data and averages will be kept.`))return;try{const et=await listEntityType(WORKROOM_LIST),body={__metadata:{type:et}};assignField(body,workroomFieldMap,'WM End Month',ym+'-01T12:00:00Z');await spWrite(WORKROOM_LIST,r.setup.id,body);await loadSharePoint();selectedWorkroomKey=key;buildReviewRows();const nr=reviewRows.find(x=>x.key===key);if(nr)openDetail(nr);}catch(e){console.error(e);alert('Could not save WM End Month: '+e.message);}}
@@ -774,7 +909,7 @@ function refreshDecisionPreview(){
   document.getElementById('decision-preview').value=v>0?'Accrual Entered':'No Accrual';
   const r=reviewRows.find(x=>x.key===selectedWorkroomKey),el=document.getElementById('cpi-after-accrual-metric');
   if(r&&el){
-    const projectedTotal=v>0?(r.amountBilled+r.reversal+v):r.total;
+    const projectedTotal=r.preTotal+v;
     el.textContent=r.installs?money(projectedTotal/r.installs):'—';
   }
 }
@@ -796,7 +931,7 @@ async function saveSelectedReview(){
     assignField(body,historyFieldMap,'Waste Method',r.method);
     assignField(body,historyFieldMap,'Review Status','Reviewed');
     assignField(body,historyFieldMap,'Review Trigger',r.trigger||'');
-    assignField(body,historyFieldMap,'NetSuite Vendor Expense',r.nsVendor);
+    assignField(body,historyFieldMap,'NetSuite Vendor Expense',r.amountBilled);
     assignField(body,historyFieldMap,'Prior Accrual Reversal',r.reversal);
     assignField(body,historyFieldMap,'WM / Expected Spend',r.wmSpend);
     assignField(body,historyFieldMap,'Difference',r.wmFound?r.difference:0);
@@ -870,7 +1005,7 @@ async function upsertMonthRecord(ym,values){
 }
 async function snapshotReviewRow(r,ym){
   const existing=historicalFor(r.key,ym),et=await listEntityType(HISTORY_LIST),body={__metadata:{type:et},Title:`${ym}-${r.setup?.number||r.name}`};
-  assignField(body,historyFieldMap,'Workroom Name',r.setup?.name||r.name);assignField(body,historyFieldMap,'Workroom Number',r.setup?.number||'');assignField(body,historyFieldMap,'Accrual Month',ym+'-01T12:00:00Z');assignField(body,historyFieldMap,'Waste Method',r.method);assignField(body,historyFieldMap,'Review Status','Reviewed');assignField(body,historyFieldMap,'Review Trigger',r.trigger||'');assignField(body,historyFieldMap,'NetSuite Vendor Expense',r.nsVendor);assignField(body,historyFieldMap,'Prior Accrual Reversal',r.reversal);assignField(body,historyFieldMap,'WM / Expected Spend',r.wmSpend);assignField(body,historyFieldMap,'Difference',r.wmFound?r.difference:0);assignField(body,historyFieldMap,'Completed Installs',r.installs);assignField(body,historyFieldMap,'CPI',r.cpi||0);assignField(body,historyFieldMap,'Final Accrual',existing?.finalAccrual||0);assignField(body,historyFieldMap,'Accrual Decision',existing?.finalAccrual>0?'Accrual Entered':'No Accrual');assignField(body,historyFieldMap,'Decision Reason',existing?.reason||(!r.trigger?'No accrual review trigger for the month.':'Reviewed before accrual submission.'));assignField(body,historyFieldMap,'Review Notes',existing?.notes||'');assignField(body,historyFieldMap,'Reviewed Date',existing?.reviewedDate||new Date().toISOString());
+  assignField(body,historyFieldMap,'Workroom Name',r.setup?.name||r.name);assignField(body,historyFieldMap,'Workroom Number',r.setup?.number||'');assignField(body,historyFieldMap,'Accrual Month',ym+'-01T12:00:00Z');assignField(body,historyFieldMap,'Waste Method',r.method);assignField(body,historyFieldMap,'Review Status','Reviewed');assignField(body,historyFieldMap,'Review Trigger',r.trigger||'');assignField(body,historyFieldMap,'NetSuite Vendor Expense',r.amountBilled);assignField(body,historyFieldMap,'Prior Accrual Reversal',r.reversal);assignField(body,historyFieldMap,'WM / Expected Spend',r.wmSpend);assignField(body,historyFieldMap,'Difference',r.wmFound?r.difference:0);assignField(body,historyFieldMap,'Completed Installs',r.installs);assignField(body,historyFieldMap,'CPI',r.cpi||0);assignField(body,historyFieldMap,'Final Accrual',existing?.finalAccrual||0);assignField(body,historyFieldMap,'Accrual Decision',existing?.finalAccrual>0?'Accrual Entered':'No Accrual');assignField(body,historyFieldMap,'Decision Reason',existing?.reason||(!r.trigger?'No accrual review trigger for the month.':'Reviewed before accrual submission.'));assignField(body,historyFieldMap,'Review Notes',existing?.notes||'');assignField(body,historyFieldMap,'Reviewed Date',existing?.reviewedDate||new Date().toISOString());
   await spWrite(HISTORY_LIST,existing?.id,body);
 }
 async function markAccrualSubmitted(){
