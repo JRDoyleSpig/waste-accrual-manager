@@ -113,6 +113,13 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .detail-history-chip .a{font-family:var(--mono);font-weight:700;margin-top:3px}
 @media(max-width:1100px){.detail-history-strip{grid-template-columns:repeat(3,minmax(0,1fr))}}
 
+
+.help-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.help-copy{font-size:12px;line-height:1.55;color:var(--text)}
+.help-copy p{margin:0 0 10px}
+.help-copy p:last-child{margin-bottom:0}
+@media(max-width:1000px){.help-grid{grid-template-columns:1fr}}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js" crossorigin="anonymous"></script>
@@ -133,6 +140,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
       <div class="nav-item" data-view="workrooms" onclick="showView('workrooms',this)">Workrooms</div>
       <div class="sidebar-section">History</div>
       <div class="nav-item" data-view="history" onclick="showView('history',this)">Accrual History</div>
+      <div class="sidebar-section">Help</div>
+      <div class="nav-item" data-view="help" onclick="showView('help',this)">Help &amp; Training</div>
     </aside>
     <main class="content">
       <div class="statusbar"><span id="conn-dot" class="conn-dot loading"></span><span id="conn-text">Connecting to SharePoint…</span></div>
@@ -145,9 +154,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
         </div>
 
         <div class="upload-strip">
-          <div class="upload-card"><div class="upload-title">NetSuite Waste Report</div><div id="ns-status" class="upload-status">Not loaded</div><label class="btn primary file-label">Upload CSV<input id="ns-file" type="file" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" onchange="handleNSFile(this.files[0]);this.value=''"/></label></div>
-          <div class="upload-card"><div class="upload-title">Waste Management Spend</div><div id="wm-status" class="upload-status">Not loaded</div><label class="btn primary file-label">Upload CSV<input id="wm-file" type="file" accept=".csv,.txt,text/csv,text/plain" onchange="handleWMFile(this.files[0]);this.value=''"/></label></div>
-          <div class="upload-card"><div class="upload-title">Completed Installs</div><div id="inst-status" class="upload-status">Not loaded</div><label class="btn primary file-label">Upload CSV<input id="inst-file" type="file" accept=".csv,text/csv" onchange="handleInstallsFile(this.files[0]);this.value=''"/></label></div>
+          <div class="upload-card"><div class="upload-title">NetSuite Waste Report</div><div id="ns-status" class="upload-status">Not loaded</div><div style="display:flex;gap:7px;flex-wrap:wrap"><label class="btn primary file-label">Upload CSV<input id="ns-file" type="file" accept=".csv,text/csv" onchange="handleNSFile(this.files[0]);this.value=''"/></label><button class="btn" id="download-ns" onclick="downloadOriginal('ns')" disabled>Download Original</button></div></div>
+          <div class="upload-card"><div class="upload-title">Waste Management Spend</div><div id="wm-status" class="upload-status">Not loaded</div><div style="display:flex;gap:7px;flex-wrap:wrap"><label class="btn primary file-label">Upload CSV<input id="wm-file" type="file" accept=".csv,.txt,text/csv,text/plain" onchange="handleWMFile(this.files[0]);this.value=''"/></label><button class="btn" id="download-wm" onclick="downloadOriginal('wm')" disabled>Download Original</button></div></div>
+          <div class="upload-card"><div class="upload-title">Completed Installs</div><div id="inst-status" class="upload-status">Not loaded</div><div style="display:flex;gap:7px;flex-wrap:wrap"><label class="btn primary file-label">Upload CSV<input id="inst-file" type="file" accept=".csv,text/csv" onchange="handleInstallsFile(this.files[0]);this.value=''"/></label><button class="btn" id="download-inst" onclick="downloadOriginal('inst')" disabled>Download Original</button></div></div>
         </div>
 
         <div class="stats-row" id="stats-row"></div>
@@ -244,7 +253,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
                 <div class="workflow-step-title">2 · Post-Close Validation</div>
                 <div class="workflow-step-sub">After Accounting closes the month, upload the Tableau Avg Waste per Install report. Excel is preferred because it preserves the decimal CPI values. This is required before the month can be finalized.</div>
                 <div id="postclose-controls" style="margin-top:9px">
-                  <label class="btn primary file-label" id="tableau-upload-label">Upload Tableau CPI (Excel preferred)<input id="tableau-file" type="file" accept=".csv,text/csv" onchange="handleTableauFile(this.files[0]);this.value=''"/></label>
+                  <label class="btn primary file-label" id="tableau-upload-label">Upload Tableau CPI (Excel preferred)<input id="tableau-file" type="file" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" onchange="handleTableauFile(this.files[0]);this.value=''"/></label>
+                  <button class="btn" id="download-tableau" onclick="downloadOriginal('tableau')" disabled>Download Original</button>
                   <span id="tableau-status" class="upload-status" style="display:inline;margin-left:8px">Not loaded</span>
                 </div>
                 <div style="margin-top:9px"><button class="btn good" id="finalize-month-btn" onclick="markMonthFinalized()" disabled>Mark Month Finalized</button></div>
@@ -272,8 +282,47 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
       </section>
 
       <section id="view-history" class="hidden">
-        <div class="section-header"><div><div class="section-title">Accrual History</div><div class="section-sub">Saved monthly decisions from SharePoint.</div></div><div class="section-actions"><input class="search-box" id="history-search" placeholder="Search workroom…" oninput="renderHistory()"></div></div>
+        <div class="section-header">
+          <div><div class="section-title">Accrual History</div><div class="section-sub">Saved monthly decisions from SharePoint. Exports always include All Workrooms — WM and Non-WM together.</div></div>
+          <div class="section-actions" style="flex-wrap:wrap">
+            <input class="search-box" id="history-search" placeholder="Search workroom…" oninput="renderHistory()">
+            <input class="search-box" id="history-export-month" type="month">
+            <button class="btn" onclick="exportSelectedMonthWorkbook()">Export Selected Month</button>
+            <button class="btn primary" onclick="exportFullHistoryWorkbook()">Export Full History</button>
+          </div>
+        </div>
         <div class="panel"><div style="overflow:auto"><table><thead><tr><th>Month</th><th>Workroom</th><th>Method</th><th style="text-align:right">Vendor Expense</th><th style="text-align:right">WM Spend</th><th style="text-align:right">Difference</th><th style="text-align:right">CPI</th><th style="text-align:right">Accrual Amount</th><th style="text-align:right">Final Tableau CPI</th><th>Decision</th><th>Reason</th></tr></thead><tbody id="history-tbody"></tbody></table></div></div>
+      </section>
+
+      <section id="view-help" class="hidden">
+        <div class="section-header"><div><div class="section-title">Help &amp; Training</div><div class="section-sub">Quick reference for the monthly Waste Accrual process and the app.</div></div></div>
+        <div class="help-grid">
+          <div class="panel"><div class="panel-head"><div class="panel-title">1 · Monthly Review</div></div><div class="panel-body help-copy">
+            <p>Select the accrual month, then upload the <b>NetSuite Waste Report</b>, <b>Waste Management Spend</b>, and <b>Completed Installs</b> reports. Each month keeps its own files in this browser.</p>
+            <p><b>Amount Billed</b> is current vendor expense. <b>PM Reversal</b> is the prior-month accrual reversal. <b>Pre-Accrual Total</b> is Amount Billed + PM Reversal. <b>CPI Before</b> uses that pre-accrual total.</p>
+            <p>For WM workrooms, <b>WM Difference = WM Total − Pre-Accrual Total</b>. It is a review signal, not automatically the accrual amount.</p>
+          </div></div>
+          <div class="panel"><div class="panel-head"><div class="panel-title">2 · Make the Accrual Decision</div></div><div class="panel-body help-copy">
+            <p>Use Review Signals, CPI, historical averages, prior accruals, billing timing, invoices, haul activity, and location-specific notes as supporting evidence.</p>
+            <p>Enter the <b>Final Accrual</b> directly on Monthly Review and press <b>Enter</b>. A blank amount means $0. <b>CPI After</b> shows the projected CPI after the accrual.</p>
+            <p>The app does not force a universal formula. Judgment remains part of the process.</p>
+          </div></div>
+          <div class="panel"><div class="panel-head"><div class="panel-title">3 · Month-End</div></div><div class="panel-body help-copy">
+            <p>After review, open <b>Month-End</b>. Accrual Entries shows only workrooms with an accrual greater than $0. Export the entries and send the Utility Accrual spreadsheet to Accounting.</p>
+            <p>After Accounting closes the month, upload the Tableau <b>Avg Waste per Install</b> report. Excel is preferred because it preserves decimal CPI values. Complete Post-Close Validation, then finalize the month.</p>
+          </div></div>
+          <div class="panel"><div class="panel-head"><div class="panel-title">4 · Files &amp; Exports</div></div><div class="panel-body help-copy">
+            <p><b>Download Original</b> returns the exact file that was uploaded for the selected month. Switching months loads that month's file set.</p>
+            <p>Accrual History provides <b>Export Selected Month</b> and <b>Export Full History</b>. Both exports contain All Workrooms, including WM and Non-WM.</p>
+            <p>The Full History workbook uses a wide monthly layout modeled after the historical WM Accrual Summary, plus a detail sheet for auditing.</p>
+          </div></div>
+          <div class="panel"><div class="panel-head"><div class="panel-title">Important Review Rules</div></div><div class="panel-body help-copy">
+            <p><b>WM Method:</b> compare WM spend/service data with booked GL activity. Roughly $1,000+ of difference is a normal review guideline, but judgment still applies.</p>
+            <p><b>CPI:</b> a review signal and context — not the accrual amount.</p>
+            <p><b>Direct Vendor:</b> normally no accrual unless billing timing or another specific event creates a reason to accrue.</p>
+            <p><b>Closed locations:</b> remain in current review for the closure month plus two additional months, then disappear from current review while history remains.</p>
+          </div></div>
+        </div>
       </section>
     </main>
   </div>
@@ -331,7 +380,7 @@ const SP_SITE="https://serviceprosgroup.sharepoint.com/sites/PropertyManagement"
 const SP_SCOPES=["https://serviceprosgroup.sharepoint.com/AllSites.Write"];
 const WORKROOM_LIST=SP_SITE+"/_api/web/lists/getbytitle('Waste%20Accrual%20Workrooms')";
 const HISTORY_LIST=SP_SITE+"/_api/web/lists/getbytitle('Waste%20Accrual%20History')";
-let msalApp=null,tokenCache=null,workrooms=[],historyRows=[],monthRecords=[],nsRows=[],wmRows=[],installsRows=[],tableauRows=[],tableauInfo=null,reviewRows=[],selectedWorkroomKey='',reviewFilter='all',wmVendorFilter='all',reviewSort={key:'name',dir:1},editingWorkroomId=null,workroomFieldMap={},historyFieldMap={},wmPendingImport=null,wmIndex={totals:new Map(),months:new Map()},sourceMeta={ns:null,wm:null,inst:null};
+let msalApp=null,tokenCache=null,workrooms=[],historyRows=[],monthRecords=[],nsRows=[],wmRows=[],installsRows=[],tableauRows=[],tableauInfo=null,reviewRows=[],selectedWorkroomKey='',reviewFilter='all',wmVendorFilter='all',reviewSort={key:'name',dir:1},editingWorkroomId=null,workroomFieldMap={},historyFieldMap={},wmPendingImport=null,wmIndex={totals:new Map(),months:new Map()},sourceMeta={ns:null,wm:null,inst:null},sourceFiles={ns:null,wm:null,inst:null,tableau:null};
 const DEFAULT_WASTE_ACCOUNT='6701 Utilities : Utilities - Trash/Dumpsters';
 
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -415,7 +464,7 @@ async function loadSharePoint(force=false){
   }catch(e){console.error(e);setConn('bad','SharePoint connection failed');showError('Could not connect to the Waste Accrual SharePoint lists. '+(e.message||e));}
 }
 
-function showView(name,el){document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden'));document.getElementById('view-'+name).classList.remove('hidden');document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));el?.classList.add('active');if(name==='workrooms')renderWorkrooms();if(name==='history')renderHistory();if(name==='monthend'){syncMonthSelectors();renderAccrualEntries();renderMonthWorkflow();renderPostCloseValidation();}}
+function showView(name,el){document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden'));document.getElementById('view-'+name).classList.remove('hidden');document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));el?.classList.add('active');if(name==='workrooms')renderWorkrooms();if(name==='history'){const hm=document.getElementById('history-export-month');if(hm&&!hm.value)hm.value=document.getElementById('month-select')?.value||priorMonthISO();renderHistory();}if(name==='monthend'){syncMonthSelectors();renderAccrualEntries();renderMonthWorkflow();renderPostCloseValidation();}}
 
 async function readDelimitedFile(file){
   const buf=await file.arrayBuffer(),bytes=new Uint8Array(buf);let text;
@@ -437,12 +486,34 @@ function sourceDB(){
     req.onerror=()=>reject(req.error);
   });
 }
+
+function exactFileRecord(file){
+  if(!file)return null;
+  return {name:file.name,type:file.type||'application/octet-stream',lastModified:file.lastModified||0,blob:file.slice(0,file.size,file.type||'application/octet-stream')};
+}
+function updateOriginalDownloadButtons(){
+  for(const k of ['ns','wm','inst','tableau']){
+    const b=document.getElementById('download-'+k);
+    if(!b)continue;
+    const f=sourceFiles[k];
+    b.disabled=!f?.blob;
+    b.title=f?.name?`Download exact uploaded file: ${f.name}`:'No exact original saved for this month';
+  }
+}
+function downloadOriginal(kind){
+  const f=sourceFiles[kind];
+  if(!f?.blob)return alert('The exact original file is not stored for this month yet. Re-upload it once in this version and it will be retained going forward.');
+  const url=URL.createObjectURL(f.blob),a=document.createElement('a');
+  a.href=url;a.download=f.name||'download';document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
 async function saveCurrentMonthSources(){
   const ym=document.getElementById('month-select')?.value||priorMonthISO(),db=await sourceDB();
   const rec={
     month:ym,
     savedAt:new Date().toISOString(),
-    nsRows,wmRows,installsRows,tableauRows,tableauInfo,sourceMeta
+    nsRows,wmRows,installsRows,tableauRows,tableauInfo,sourceMeta,sourceFiles
   };
   await new Promise((resolve,reject)=>{
     const tx=db.transaction(MONTH_SOURCE_STORE,'readwrite');
@@ -469,11 +540,12 @@ async function deleteMonthSources(ym){
   db.close();
 }
 function resetLoadedSourceState(){
-  nsRows=[];wmRows=[];wmIndex={totals:new Map(),months:new Map()};installsRows=[];tableauRows=[];tableauInfo=null;sourceMeta={ns:null,wm:null,inst:null};selectedWorkroomKey='';
+  nsRows=[];wmRows=[];wmIndex={totals:new Map(),months:new Map()};installsRows=[];tableauRows=[];tableauInfo=null;sourceMeta={ns:null,wm:null,inst:null};sourceFiles={ns:null,wm:null,inst:null,tableau:null};selectedWorkroomKey='';
   ['ns-status','wm-status','inst-status'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='Not loaded';});
   const t=document.getElementById('tableau-status');if(t)t.textContent='Not loaded';
   document.getElementById('detail-panel')?.classList.remove('open');
   document.getElementById('postclose-validation')?.classList.add('hidden');
+  updateOriginalDownloadButtons();
 }
 async function restoreMonthSources(ym){
   resetLoadedSourceState();
@@ -486,6 +558,7 @@ async function restoreMonthSources(ym){
       tableauRows=Array.isArray(rec.tableauRows)?rec.tableauRows:[];
       tableauInfo=rec.tableauInfo||null;
       sourceMeta=rec.sourceMeta||{ns:null,wm:null,inst:null};
+      sourceFiles=rec.sourceFiles||{ns:null,wm:null,inst:null,tableau:null};
       if(wmRows.length)rebuildWMIndex();
 
       if(sourceMeta.ns)document.getElementById('ns-status').textContent=`${sourceMeta.ns} · ${nsRows.length.toLocaleString()} rows`;
@@ -496,10 +569,11 @@ async function restoreMonthSources(ym){
   }catch(e){
     console.error('Could not restore monthly source files',e);
   }
+  updateOriginalDownloadButtons();
   buildReviewRows();renderMonthWorkflow();renderPostCloseValidation();
 }
 
-async function handleNSFile(file){if(!file)return;try{nsRows=await readDelimitedFile(file);const needed=['Workroom','Period','Amount','Is Reversal'];const missing=needed.filter(h=>!nsRows.length||col(nsRows[0],h)===''&&!Object.keys(nsRows[0]).some(k=>String(k).toLowerCase().replace(/[^a-z0-9]/g,'')===h.toLowerCase().replace(/[^a-z0-9]/g,'')));if(missing.length)throw new Error('Missing expected column(s): '+missing.join(', '));sourceMeta.ns=file.name;document.getElementById('ns-status').textContent=`${file.name} · ${nsRows.length.toLocaleString()} rows`;await saveCurrentMonthSources();buildReviewRows();}catch(e){console.error(e);showError('NetSuite file could not be read: '+e.message);}}
+async function handleNSFile(file){if(!file)return;try{nsRows=await readDelimitedFile(file);const needed=['Workroom','Period','Amount','Is Reversal'];const missing=needed.filter(h=>!nsRows.length||col(nsRows[0],h)===''&&!Object.keys(nsRows[0]).some(k=>String(k).toLowerCase().replace(/[^a-z0-9]/g,'')===h.toLowerCase().replace(/[^a-z0-9]/g,'')));if(missing.length)throw new Error('Missing expected column(s): '+missing.join(', '));sourceMeta.ns=file.name;sourceFiles.ns=exactFileRecord(file);document.getElementById('ns-status').textContent=`${file.name} · ${nsRows.length.toLocaleString()} rows`;await saveCurrentMonthSources();updateOriginalDownloadButtons();buildReviewRows();}catch(e){console.error(e);showError('NetSuite file could not be read: '+e.message);}}
 function wmNormHeader(s){return String(s||'').toLowerCase().replace(/\ufeff/g,'').replace(/[^a-z0-9]/g,'');}
 const WM_ALIASES={
   location:['Location Name','Client Location Name','Site Name','Store Name','Facility Name','Workroom Name','Location','Workroom'],
@@ -636,8 +710,10 @@ async function applyWMColumnMapping(){
     document.getElementById('wm-status').textContent='Indexing WM history…';
     await new Promise(r=>requestAnimationFrame(r));
     rebuildWMIndex();
+    sourceMeta.wm=pending.file.name;sourceFiles.wm=exactFileRecord(pending.file);
     document.getElementById('wm-status').textContent=`${pending.file.name} · ${wmRows.length.toLocaleString()} usable rows`;
     wmPendingImport=null;
+    await saveCurrentMonthSources();updateOriginalDownloadButtons();
     await new Promise(r=>requestAnimationFrame(r));
     buildReviewRows();
   }catch(e){console.error(e);wmRows=[];wmPendingImport=null;showError('WM Spend file could not be read: '+e.message);document.getElementById('wm-status').textContent='Not loaded';}
@@ -674,15 +750,15 @@ async function handleWMFile(file){
     status.textContent='Indexing WM history…';
     await new Promise(r=>requestAnimationFrame(r));
     rebuildWMIndex();
-    sourceMeta.wm=file.name;status.textContent=`${file.name} · ${wmRows.length.toLocaleString()} usable rows`;
-    await saveCurrentMonthSources();
+    sourceMeta.wm=file.name;sourceFiles.wm=exactFileRecord(file);status.textContent=`${file.name} · ${wmRows.length.toLocaleString()} usable rows`;
+    await saveCurrentMonthSources();updateOriginalDownloadButtons();
     await new Promise(r=>requestAnimationFrame(r));
     buildReviewRows();
   }catch(e){
     console.error(e);wmRows=[];status.textContent='Not loaded';showError('WM Spend file could not be read: '+e.message);
   }
 }
-async function handleInstallsFile(file){if(!file)return;try{installsRows=await readDelimitedFile(file);sourceMeta.inst=file.name;document.getElementById('inst-status').textContent=`${file.name} · ${installsRows.length.toLocaleString()} rows`;await saveCurrentMonthSources();buildReviewRows();}catch(e){showError('Completed Installs file could not be read: '+e.message);}}
+async function handleInstallsFile(file){if(!file)return;try{installsRows=await readDelimitedFile(file);sourceMeta.inst=file.name;sourceFiles.inst=exactFileRecord(file);document.getElementById('inst-status').textContent=`${file.name} · ${installsRows.length.toLocaleString()} rows`;await saveCurrentMonthSources();updateOriginalDownloadButtons();buildReviewRows();}catch(e){showError('Completed Installs file could not be read: '+e.message);}}
 async function handleTableauFile(file){
   if(!file)return;
   try{
@@ -768,8 +844,9 @@ async function handleTableauFile(file){
     if(!data.length)throw new Error('No workroom rows were found in the Tableau export.');
     tableauRows=data;
     tableauInfo={fileName:file.name,month:target,loadedAt:new Date().toISOString(),format:(ext==='xlsx'||ext==='xls')?'Excel':'CSV'};
+    sourceFiles.tableau=exactFileRecord(file);
     document.getElementById('tableau-status').textContent=`${file.name} · ${data.length} workrooms${tableauInfo.format==='Excel'?' · full precision':''}`;
-    await saveCurrentMonthSources();
+    await saveCurrentMonthSources();updateOriginalDownloadButtons();
     renderPostCloseValidation();renderMonthWorkflow();
   }catch(e){
     console.error(e);
@@ -1323,9 +1400,110 @@ async function markMonthFinalized(){
   finally{btn.disabled=false;btn.textContent='Mark Month Finalized';}
 }
 
+
+function excelSafeName(s){return String(s||'').replace(/[\\/?*\[\]:]/g,' ').trim().slice(0,31)||'Sheet1';}
+function setWorkbookColumnWidths(ws,widths){ws['!cols']=widths.map(w=>({wch:w}));}
+function exportMonthRows(ym){
+  const activeNames=new Map();
+  for(const w of workrooms){
+    if(workroomVisibleForMonth(w,ym)&&!isKnownClosedHistorical(w.name))activeNames.set(norm(w.name),w.name);
+  }
+  for(const h of historyRows.filter(x=>x.month===ym))activeNames.set(norm(h.name),h.name);
+
+  return [...activeNames.entries()].map(([key,name])=>{
+    const h=historyRows.find(x=>x.month===ym&&norm(x.name)===key);
+    const w=workrooms.find(x=>norm(x.name)===key);
+    const billed=Number(h?.vendorExpense||0),rev=Number(h?.reversal||0),acc=Number(h?.finalAccrual||0),
+          pre=billed+rev,total=pre+acc,inst=Number(h?.installs||0),wm=Number(h?.wmSpend||0);
+    return {
+      'Workroom':name,
+      'Method':h?.method||w?.method||'',
+      'Amount Billed':billed,
+      'PM Reversal':rev,
+      'Pre-Accrual Total':pre,
+      'Accrual':acc,
+      'Total':total,
+      'Completed Installs':inst||'',
+      'Cost Per Install':inst?total/inst:'',
+      'WM Total':wm||'',
+      'WM Difference':(h&&h.wmSpend)?wm-pre:'',
+      'Final Tableau CPI':Number(h?.tableauCPI||0)||'',
+      'Decision':h?.decision||'',
+      'Decision Reason':h?.reason||'',
+      'Review Notes':h?.notes||''
+    };
+  }).sort((a,b)=>a.Workroom.localeCompare(b.Workroom));
+}
+function exportSelectedMonthWorkbook(){
+  const ym=document.getElementById('history-export-month')?.value||document.getElementById('month-select')?.value||priorMonthISO();
+  const rows=exportMonthRows(ym);
+  if(!rows.length)return alert('No workrooms are available for that month.');
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.json_to_sheet(rows);
+  setWorkbookColumnWidths(ws,[24,15,14,14,16,14,14,16,16,14,14,16,18,28,34]);
+  XLSX.utils.book_append_sheet(wb,ws,excelSafeName(displayMonth(ym)));
+  XLSX.writeFile(wb,`Waste Accrual - ${displayMonth(ym)}.xlsx`);
+}
+function exportFullHistoryWorkbook(){
+  const months=[...new Set(historyRows.map(h=>h.month).filter(Boolean))].sort();
+  if(!months.length)return alert('No saved accrual history is available yet.');
+
+  const names=[...new Set(historyRows.map(h=>h.name).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  const monthFields=['Amount Billed','PM Reversal','Accrual','Total','Cost Per Install','WM Total','WM Difference','Completed Installs','Final Tableau CPI'];
+
+  const aoa=[];
+  const top=['Workroom','Method'],sub=['Workroom','Method'];
+  const merges=[];
+  let col=2;
+  for(const ym of months){
+    top.push(displayMonth(ym),...Array(monthFields.length-1).fill(''));
+    sub.push(...monthFields);
+    merges.push({s:{r:0,c:col},e:{r:0,c:col+monthFields.length-1}});
+    col+=monthFields.length;
+  }
+  aoa.push(top,sub);
+
+  for(const name of names){
+    const key=norm(name),setup=workrooms.find(w=>norm(w.name)===key);
+    const row=[name,setup?.method||historyRows.find(h=>norm(h.name)===key)?.method||''];
+    for(const ym of months){
+      const h=historyRows.find(x=>x.month===ym&&norm(x.name)===key);
+      if(!h){row.push(...Array(monthFields.length).fill(''));continue;}
+      const billed=Number(h.vendorExpense||0),rev=Number(h.reversal||0),acc=Number(h.finalAccrual||0),
+            pre=billed+rev,total=pre+acc,inst=Number(h.installs||0),wm=Number(h.wmSpend||0);
+      row.push(billed,rev,acc,total,inst?total/inst:'',wm||'',h.wmSpend?wm-pre:'',inst||'',Number(h.tableauCPI||0)||'');
+    }
+    aoa.push(row);
+  }
+
+  const wb=XLSX.utils.book_new(),summary=XLSX.utils.aoa_to_sheet(aoa);
+  summary['!merges']=merges;
+  summary['!cols']=[{wch:25},{wch:15},...months.flatMap(()=>monthFields.map(()=>({wch:14})))];
+  XLSX.utils.book_append_sheet(wb,summary,'Accrual Summary');
+
+  const detail=historyRows.slice().sort((a,b)=>a.month.localeCompare(b.month)||a.name.localeCompare(b.name)).map(h=>{
+    const billed=Number(h.vendorExpense||0),rev=Number(h.reversal||0),acc=Number(h.finalAccrual||0),
+          pre=billed+rev,total=pre+acc,inst=Number(h.installs||0),wm=Number(h.wmSpend||0);
+    return {
+      'Month':displayMonth(h.month),'Workroom':h.name,'Method':h.method,
+      'Amount Billed':billed,'PM Reversal':rev,'Pre-Accrual Total':pre,'Accrual':acc,'Total':total,
+      'Completed Installs':inst||'','Cost Per Install':inst?total/inst:'',
+      'WM Total':wm||'','WM Difference':h.wmSpend?wm-pre:'',
+      'Final Tableau CPI':Number(h.tableauCPI||0)||'','Decision':h.decision||'',
+      'Decision Reason':h.reason||'','Review Notes':h.notes||''
+    };
+  });
+  const detailWs=XLSX.utils.json_to_sheet(detail);
+  setWorkbookColumnWidths(detailWs,[14,25,15,14,14,16,14,14,16,16,14,14,16,18,28,34]);
+  XLSX.utils.book_append_sheet(wb,detailWs,'History Detail');
+  XLSX.writeFile(wb,'Waste Accrual - Full History.xlsx');
+}
+
 function renderHistory(){const q=norm(document.getElementById('history-search')?.value||''),rows=historyRows.filter(h=>!q||norm(h.name).includes(q)).sort((a,b)=>b.month.localeCompare(a.month)||a.name.localeCompare(b.name));const tb=document.getElementById('history-tbody');if(!tb)return;tb.innerHTML=rows.length?rows.map(h=>`<tr><td>${esc(displayMonth(h.month))}</td><td class="workroom">${esc(h.name)}</td><td>${methodPill(h.method)}</td><td class="money">${money(h.vendorExpense)}</td><td class="money">${h.wmSpend?money(h.wmSpend):'—'}</td><td class="money">${h.wmSpend?money(h.difference):'—'}</td><td class="money">${money(h.cpi)}</td><td class="money">${money(h.finalAccrual)}</td><td class="money">${h.tableauCPI?money(h.tableauCPI):'—'}</td><td>${esc(h.decision)}</td><td style="max-width:320px;white-space:normal">${esc(h.reason)}</td></tr>`).join(''):`<tr><td colspan="11"><div class="empty">No saved accrual history yet.</div></td></tr>`;}
 
 document.getElementById('month-select').value=priorMonthISO();syncMonthSelectors();
+const hx=document.getElementById('history-export-month');if(hx)hx.value=document.getElementById('month-select').value;
+updateOriginalDownloadButtons();
 loadSharePoint();
 restoreMonthSources(document.getElementById('month-select').value||priorMonthISO());
 </script>
