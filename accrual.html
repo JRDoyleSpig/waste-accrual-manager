@@ -225,7 +225,7 @@ const SP_SITE="https://serviceprosgroup.sharepoint.com/sites/PropertyManagement"
 const SP_SCOPES=["https://serviceprosgroup.sharepoint.com/AllSites.Write"];
 const WORKROOM_LIST=SP_SITE+"/_api/web/lists/getbytitle('Waste%20Accrual%20Workrooms')";
 const HISTORY_LIST=SP_SITE+"/_api/web/lists/getbytitle('Waste%20Accrual%20History')";
-let msalApp=null,tokenCache=null,workrooms=[],historyRows=[],monthRecords=[],nsRows=[],wmRows=[],installsRows=[],tableauRows=[],tableauInfo=null,reviewRows=[],selectedWorkroomKey='',reviewFilter='all',reviewSort={key:'name',dir:1},editingWorkroomId=null,workroomFieldMap={},historyFieldMap={},wmPendingImport=null;
+let msalApp=null,tokenCache=null,workrooms=[],historyRows=[],monthRecords=[],nsRows=[],wmRows=[],installsRows=[],tableauRows=[],tableauInfo=null,reviewRows=[],selectedWorkroomKey='',reviewFilter='all',reviewSort={key:'name',dir:1},editingWorkroomId=null,workroomFieldMap={},historyFieldMap={},wmPendingImport=null,wmIndex={totals:new Map(),months:new Map()};
 const DEFAULT_WASTE_ACCOUNT='6701 Utilities : Utilities - Trash/Dumpsters';
 
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -452,8 +452,13 @@ async function applyWMColumnMapping(){
   try{
     wmRows=await wmBuildCanonicalRows(pending,map);
     if(!wmRows.length)throw new Error('No usable WM rows were found with the selected columns.');
+    document.getElementById('wm-status').textContent='Indexing WM history…';
+    await new Promise(r=>requestAnimationFrame(r));
+    rebuildWMIndex();
     document.getElementById('wm-status').textContent=`${pending.file.name} · ${wmRows.length.toLocaleString()} usable rows`;
-    wmPendingImport=null;buildReviewRows();
+    wmPendingImport=null;
+    await new Promise(r=>requestAnimationFrame(r));
+    buildReviewRows();
   }catch(e){console.error(e);wmRows=[];wmPendingImport=null;showError('WM Spend file could not be read: '+e.message);document.getElementById('wm-status').textContent='Not loaded';}
 }
 async function handleWMFile(file){
@@ -485,7 +490,11 @@ async function handleWMFile(file){
     }
     wmRows=await wmBuildCanonicalRows(pending,map);
     if(!wmRows.length)throw new Error('No usable WM rows were found.');
+    status.textContent='Indexing WM history…';
+    await new Promise(r=>requestAnimationFrame(r));
+    rebuildWMIndex();
     status.textContent=`${file.name} · ${wmRows.length.toLocaleString()} usable rows`;
+    await new Promise(r=>requestAnimationFrame(r));
     buildReviewRows();
   }catch(e){
     console.error(e);wmRows=[];status.textContent='Not loaded';showError('WM Spend file could not be read: '+e.message);
@@ -522,7 +531,7 @@ async function handleTableauFile(file){
     renderPostCloseValidation();renderMonthWorkflow();
   }catch(e){console.error(e);showError('Tableau CPI file could not be read: '+e.message);}
 }
-function clearMonthlyFiles(){nsRows=[];wmRows=[];installsRows=[];tableauRows=[];tableauInfo=null;selectedWorkroomKey='';['ns-status','wm-status','inst-status'].forEach(id=>document.getElementById(id).textContent='Not loaded');document.getElementById('tableau-status').textContent='Not loaded';document.getElementById('detail-panel').classList.add('hidden');document.getElementById('postclose-validation').classList.add('hidden');buildReviewRows();renderMonthWorkflow();}
+function clearMonthlyFiles(){nsRows=[];wmRows=[];wmIndex={totals:new Map(),months:new Map()};installsRows=[];tableauRows=[];tableauInfo=null;selectedWorkroomKey='';['ns-status','wm-status','inst-status'].forEach(id=>document.getElementById(id).textContent='Not loaded');document.getElementById('tableau-status').textContent='Not loaded';document.getElementById('detail-panel').classList.add('hidden');document.getElementById('postclose-validation').classList.add('hidden');buildReviewRows();renderMonthWorkflow();}
 function syncMonthSelectors(){const main=document.getElementById('month-select'),end=document.getElementById('month-end-select');if(main&&end)end.value=main.value||priorMonthISO();}
 function monthEndMonthChanged(v){const main=document.getElementById('month-select');if(main)main.value=v;monthChanged();}
 function monthChanged(){syncMonthSelectors();tableauRows=[];tableauInfo=null;selectedWorkroomKey='';document.getElementById('tableau-status').textContent='Not loaded';document.getElementById('detail-panel').classList.add('hidden');document.getElementById('postclose-validation').classList.add('hidden');buildReviewRows();renderMonthWorkflow();renderPostCloseValidation();}
@@ -564,7 +573,27 @@ function wmRowKey(r){
   });
   return candidates.length===1?norm(candidates[0].name):rawKey;
 }
-function wmObservedMonths(key){const out=new Set();for(const r of wmRows){if(wmRowKey(r)!==key)continue;const ym=wmRowYM(r);if(ym)out.add(ym);}return [...out].sort();}
+function rebuildWMIndex(){
+  const totals=new Map(),months=new Map();
+  for(const r of wmRows){
+    const key=wmRowKey(r);
+    if(!key)continue;
+    const ym=wmRowYM(r);
+    if(!ym)continue;
+    const amount=parseAmount(col(r,'Total Amount USD'));
+    const pair=key+'|'+ym;
+    const prior=totals.get(pair);
+    if(prior)prior.total+=amount;
+    else totals.set(pair,{total:amount,found:true});
+    if(!months.has(key))months.set(key,new Set());
+    months.get(key).add(ym);
+  }
+  wmIndex={totals,months};
+}
+function wmObservedMonths(key){
+  const set=wmIndex.months.get(key);
+  return set?[...set].sort():[];
+}
 function monthlyAverage(kind,key,selectedYm,count=null,wmEndMonth=''){
   const prior=shiftYM(selectedYm,-1),observed=kind==='gl'?nsObservedMonths(key):wmObservedMonths(key);if(!observed.length)return null;
   let end=prior;if(kind==='wm'&&wmEndMonth&&ymCompare(wmEndMonth,end)<0)end=wmEndMonth;
@@ -575,7 +604,7 @@ function monthlyAverage(kind,key,selectedYm,count=null,wmEndMonth=''){
   return total/months.length;
 }
 function priorHistoryCPIAverage(key,ym,count=3){const vals=[];for(let i=1;i<=count;i++){const h=historicalFor(key,shiftYM(ym,-i));if(h&&h.installs>0&&h.cpi>0)vals.push(h.cpi);}return vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null;}
-function wmSummaryFor(key,ym){let total=0,found=false;for(const r of wmRows){if(wmRowYM(r)!==ym||wmRowKey(r)!==key)continue;found=true;total+=parseAmount(col(r,'Total Amount USD'));}return{total,found};}
+function wmSummaryFor(key,ym){return wmIndex.totals.get(key+'|'+ym)||{total:0,found:false};}
 function installsFor(key){for(const r of installsRows){const vals=Object.values(r),name=vals[0];if(norm(name)===key)return parseAmount(vals[1]);}return 0;}
 function historicalFor(key,ym){return historyRows.find(h=>norm(h.name)===key&&h.month===ym)||null;}
 function setupFor(key){return workrooms.find(w=>norm(w.name)===key)||null;}
