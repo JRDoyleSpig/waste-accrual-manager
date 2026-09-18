@@ -150,7 +150,13 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
       <section id="view-review">
         <div class="section-header">
           <div><div class="section-title">Monthly Review</div><div class="section-sub">Upload the three pre-close reports and work through the locations that need judgment. Each month keeps its own uploaded source files in this browser. Switching months loads that month's files; a new month starts blank. Saved accrual history remains in SharePoint.</div></div>
-          <div class="section-actions"><label style="font-size:11px;color:var(--muted)">Accrual month</label><input id="month-select" class="search-box" type="month" onchange="monthChanged()"><button class="btn" onclick="clearMonthlyFiles()">Clear Files</button></div>
+          <div class="section-actions" style="flex-wrap:wrap">
+            <label style="font-size:11px;color:var(--muted)">Accrual month</label>
+            <input id="month-select" class="search-box" type="month" onchange="monthChanged()">
+            <button class="btn" onclick="exportSelectedMonthWorkbook()">Export Selected Month</button>
+            <button class="btn" onclick="exportFullHistoryWorkbook()">Export Full History</button>
+            <button class="btn" onclick="clearMonthlyFiles()">Clear Files</button>
+          </div>
         </div>
 
         <div class="upload-strip">
@@ -1435,7 +1441,9 @@ function exportMonthRows(ym){
   }).sort((a,b)=>a.Workroom.localeCompare(b.Workroom));
 }
 function exportSelectedMonthWorkbook(){
-  const ym=document.getElementById('history-export-month')?.value||document.getElementById('month-select')?.value||priorMonthISO();
+  const historyMonth=document.getElementById('history-export-month');
+  const historyVisible=document.getElementById('view-history')&&!document.getElementById('view-history').classList.contains('hidden');
+  const ym=(historyVisible&&historyMonth?.value)?historyMonth.value:(document.getElementById('month-select')?.value||historyMonth?.value||priorMonthISO());
   const rows=exportMonthRows(ym);
   if(!rows.length)return alert('No workrooms are available for that month.');
   const wb=XLSX.utils.book_new();
