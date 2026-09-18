@@ -439,7 +439,9 @@ const WM_ALIASES={
 const WM_LOCATION_RULES={
   'clarksville':'nashville, tn',
   'cookeville':'nashville, tn',
-  'eastsyracuse':'syracuse, ny'
+  'eastsyracuse':'syracuse, ny',
+  'jackson':'jackson, tn',
+  'jacksonville':'jacksonville, nc'
 };
 const WM_EXCLUDE_CURRENT=new Set(['installationgroup']);
 const WM_HISTORICAL_ONLY=new Set(['utica']);
@@ -750,12 +752,29 @@ function wmExpectedForMonth(setup,key,ym){
   }
   return wmObservedMonths(key).some(m=>ymCompare(m,ym)<0);
 }
-function inferredNames(){const m=new Map();for(const r of nsRows){const raw=col(r,'Workroom'),n=nsWorkroomName(raw),k=nsWorkroomKey(raw);if(n&&k)m.set(k,n);}for(const r of wmRows){
-    const rawKey=wmRuleKey(col(r,'Location Name'));
-    if(WM_EXCLUDE_CURRENT.has(rawKey)||WM_HISTORICAL_ONLY.has(rawKey))continue;
-    const wk=wmRowKey(r),setup=setupFor(wk),raw=wmCleanLocationName(col(r,'Location Name'));
-    if(wk)m.set(wk,setup?.name||(raw||wk));
-  }for(const r of installsRows){const name=String(Object.values(r)[0]||'').trim();if(name&&!/grand total/i.test(name)&&norm(name))m.set(norm(name),name);}for(const w of workrooms)if(w.name)m.set(norm(w.name),w.name);return m;}
+function inferredNames(){
+  const m=new Map();
+
+  // Service Pros sources define the review population.
+  // NetSuite can reveal a missing setup workroom.
+  for(const r of nsRows){
+    const raw=col(r,'Workroom'),n=nsWorkroomName(raw),k=nsWorkroomKey(raw);
+    if(n&&k)m.set(k,n);
+  }
+
+  // Completed Installs can also reveal a missing setup workroom.
+  for(const r of installsRows){
+    const name=String(Object.values(r)[0]||'').trim();
+    if(name&&!/grand total/i.test(name)&&norm(name))m.set(norm(name),name);
+  }
+
+  // SharePoint is the authoritative saved setup population.
+  for(const w of workrooms)if(w.name)m.set(norm(w.name),w.name);
+
+  // IMPORTANT: Waste Management data never creates a new workroom.
+  // wmRowKey() still maps WM activity onto the workrooms above for spend/history.
+  return m;
+}
 
 function priorAccrualHistory(key,ym,count=6){
   const out=[];
@@ -799,7 +818,7 @@ function buildReviewRows(){
     const ns=nsSummaryFor(key,ym,false),wm=wmSummaryFor(key,ym),inst=installsFor(key),hist=historicalFor(key,ym),method=setup?.method||(wm.found?'WM Method':'Unassigned'),preTotal=ns.preTotal,diff=wm.total-preTotal,priorCPI=priorHistoryCPIAverage(key,ym,3),cpi=inst?preTotal/inst:null;
     const gl3=monthlyAverage('gl',key,ym,3),gl12=monthlyAverage('gl',key,ym,12),glAll=monthlyAverage('gl',key,ym,null);
     const wm3=monthlyAverage('wm',key,ym,3,setup?.wmEndMonth||''),wm12=monthlyAverage('wm',key,ym,12,setup?.wmEndMonth||''),wmAll=monthlyAverage('wm',key,ym,null,setup?.wmEndMonth||'');
-    const wmExpected=wmExpectedForMonth(setup,key,ym),triggers=[];
+    const wmExpected=setup?wmExpectedForMonth(setup,key,ym):false,triggers=[];
     if(!setup)triggers.push('Workroom setup not saved');
     if(setup?.rule)triggers.push(setup.rule);
     if(wm.found&&diff>=1000)triggers.push(`WM Total exceeds booked GL Total by ${money(diff)}`);
