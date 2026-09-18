@@ -140,7 +140,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 
       <section id="view-review">
         <div class="section-header">
-          <div><div class="section-title">Monthly Review</div><div class="section-sub">Upload the three pre-close reports and work through the locations that need judgment. When the monthly review is complete, use Month-End in the sidebar to prepare the Accounting submission.</div></div>
+          <div><div class="section-title">Monthly Review</div><div class="section-sub">Upload the three pre-close reports and work through the locations that need judgment. Each month keeps its own uploaded source files in this browser. Switching months loads that month's files; a new month starts blank. Saved accrual history remains in SharePoint.</div></div>
           <div class="section-actions"><label style="font-size:11px;color:var(--muted)">Accrual month</label><input id="month-select" class="search-box" type="month" onchange="monthChanged()"><button class="btn" onclick="clearMonthlyFiles()">Clear Files</button></div>
         </div>
 
@@ -331,7 +331,7 @@ const SP_SITE="https://serviceprosgroup.sharepoint.com/sites/PropertyManagement"
 const SP_SCOPES=["https://serviceprosgroup.sharepoint.com/AllSites.Write"];
 const WORKROOM_LIST=SP_SITE+"/_api/web/lists/getbytitle('Waste%20Accrual%20Workrooms')";
 const HISTORY_LIST=SP_SITE+"/_api/web/lists/getbytitle('Waste%20Accrual%20History')";
-let msalApp=null,tokenCache=null,workrooms=[],historyRows=[],monthRecords=[],nsRows=[],wmRows=[],installsRows=[],tableauRows=[],tableauInfo=null,reviewRows=[],selectedWorkroomKey='',reviewFilter='all',wmVendorFilter='all',reviewSort={key:'name',dir:1},editingWorkroomId=null,workroomFieldMap={},historyFieldMap={},wmPendingImport=null,wmIndex={totals:new Map(),months:new Map()};
+let msalApp=null,tokenCache=null,workrooms=[],historyRows=[],monthRecords=[],nsRows=[],wmRows=[],installsRows=[],tableauRows=[],tableauInfo=null,reviewRows=[],selectedWorkroomKey='',reviewFilter='all',wmVendorFilter='all',reviewSort={key:'name',dir:1},editingWorkroomId=null,workroomFieldMap={},historyFieldMap={},wmPendingImport=null,wmIndex={totals:new Map(),months:new Map()},sourceMeta={ns:null,wm:null,inst:null};
 const DEFAULT_WASTE_ACCOUNT='6701 Utilities : Utilities - Trash/Dumpsters';
 
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -426,7 +426,80 @@ async function readDelimitedFile(file){
   return XLSX.utils.sheet_to_json(ws,{defval:'',raw:true}).map(row=>{const clean={};for(const [k,v] of Object.entries(row))clean[String(k).replace(/^\uFEFF/,'').trim()]=typeof v==='string'?v.trim():v;return clean;});
 }
 function col(row,title){const want=String(title).toLowerCase().replace(/[^a-z0-9]/g,'');for(const [k,v] of Object.entries(row||{})){if(String(k).toLowerCase().replace(/[^a-z0-9]/g,'')===want)return v;}return '';}
-async function handleNSFile(file){if(!file)return;try{nsRows=await readDelimitedFile(file);const needed=['Workroom','Period','Amount','Is Reversal'];const missing=needed.filter(h=>!nsRows.length||col(nsRows[0],h)===''&&!Object.keys(nsRows[0]).some(k=>String(k).toLowerCase().replace(/[^a-z0-9]/g,'')===h.toLowerCase().replace(/[^a-z0-9]/g,'')));if(missing.length)throw new Error('Missing expected column(s): '+missing.join(', '));document.getElementById('ns-status').textContent=`${file.name} · ${nsRows.length.toLocaleString()} rows`;buildReviewRows();}catch(e){console.error(e);showError('NetSuite file could not be read: '+e.message);}}
+
+const MONTH_SOURCE_DB='WasteAccrualManagerSources';
+const MONTH_SOURCE_STORE='monthSources';
+function sourceDB(){
+  return new Promise((resolve,reject)=>{
+    const req=indexedDB.open(MONTH_SOURCE_DB,1);
+    req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains(MONTH_SOURCE_STORE))db.createObjectStore(MONTH_SOURCE_STORE,{keyPath:'month'});};
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error);
+  });
+}
+async function saveCurrentMonthSources(){
+  const ym=document.getElementById('month-select')?.value||priorMonthISO(),db=await sourceDB();
+  const rec={
+    month:ym,
+    savedAt:new Date().toISOString(),
+    nsRows,wmRows,installsRows,tableauRows,tableauInfo,sourceMeta
+  };
+  await new Promise((resolve,reject)=>{
+    const tx=db.transaction(MONTH_SOURCE_STORE,'readwrite');
+    tx.objectStore(MONTH_SOURCE_STORE).put(rec);
+    tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
+  });
+  db.close();
+}
+async function readMonthSources(ym){
+  const db=await sourceDB();
+  const rec=await new Promise((resolve,reject)=>{
+    const tx=db.transaction(MONTH_SOURCE_STORE,'readonly'),req=tx.objectStore(MONTH_SOURCE_STORE).get(ym);
+    req.onsuccess=()=>resolve(req.result||null);req.onerror=()=>reject(req.error);
+  });
+  db.close();return rec;
+}
+async function deleteMonthSources(ym){
+  const db=await sourceDB();
+  await new Promise((resolve,reject)=>{
+    const tx=db.transaction(MONTH_SOURCE_STORE,'readwrite');
+    tx.objectStore(MONTH_SOURCE_STORE).delete(ym);
+    tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
+  });
+  db.close();
+}
+function resetLoadedSourceState(){
+  nsRows=[];wmRows=[];wmIndex={totals:new Map(),months:new Map()};installsRows=[];tableauRows=[];tableauInfo=null;sourceMeta={ns:null,wm:null,inst:null};selectedWorkroomKey='';
+  ['ns-status','wm-status','inst-status'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='Not loaded';});
+  const t=document.getElementById('tableau-status');if(t)t.textContent='Not loaded';
+  document.getElementById('detail-panel')?.classList.remove('open');
+  document.getElementById('postclose-validation')?.classList.add('hidden');
+}
+async function restoreMonthSources(ym){
+  resetLoadedSourceState();
+  try{
+    const rec=await readMonthSources(ym);
+    if(rec){
+      nsRows=Array.isArray(rec.nsRows)?rec.nsRows:[];
+      wmRows=Array.isArray(rec.wmRows)?rec.wmRows:[];
+      installsRows=Array.isArray(rec.installsRows)?rec.installsRows:[];
+      tableauRows=Array.isArray(rec.tableauRows)?rec.tableauRows:[];
+      tableauInfo=rec.tableauInfo||null;
+      sourceMeta=rec.sourceMeta||{ns:null,wm:null,inst:null};
+      if(wmRows.length)rebuildWMIndex();
+
+      if(sourceMeta.ns)document.getElementById('ns-status').textContent=`${sourceMeta.ns} · ${nsRows.length.toLocaleString()} rows`;
+      if(sourceMeta.wm)document.getElementById('wm-status').textContent=`${sourceMeta.wm} · ${wmRows.length.toLocaleString()} usable rows`;
+      if(sourceMeta.inst)document.getElementById('inst-status').textContent=`${sourceMeta.inst} · ${installsRows.length.toLocaleString()} rows`;
+      if(tableauInfo)document.getElementById('tableau-status').textContent=`${tableauInfo.fileName} · ${tableauRows.length} workrooms${tableauInfo.format==='Excel'?' · full precision':''}`;
+    }
+  }catch(e){
+    console.error('Could not restore monthly source files',e);
+  }
+  buildReviewRows();renderMonthWorkflow();renderPostCloseValidation();
+}
+
+async function handleNSFile(file){if(!file)return;try{nsRows=await readDelimitedFile(file);const needed=['Workroom','Period','Amount','Is Reversal'];const missing=needed.filter(h=>!nsRows.length||col(nsRows[0],h)===''&&!Object.keys(nsRows[0]).some(k=>String(k).toLowerCase().replace(/[^a-z0-9]/g,'')===h.toLowerCase().replace(/[^a-z0-9]/g,'')));if(missing.length)throw new Error('Missing expected column(s): '+missing.join(', '));sourceMeta.ns=file.name;document.getElementById('ns-status').textContent=`${file.name} · ${nsRows.length.toLocaleString()} rows`;await saveCurrentMonthSources();buildReviewRows();}catch(e){console.error(e);showError('NetSuite file could not be read: '+e.message);}}
 function wmNormHeader(s){return String(s||'').toLowerCase().replace(/\ufeff/g,'').replace(/[^a-z0-9]/g,'');}
 const WM_ALIASES={
   location:['Location Name','Client Location Name','Site Name','Store Name','Facility Name','Workroom Name','Location','Workroom'],
@@ -601,14 +674,15 @@ async function handleWMFile(file){
     status.textContent='Indexing WM history…';
     await new Promise(r=>requestAnimationFrame(r));
     rebuildWMIndex();
-    status.textContent=`${file.name} · ${wmRows.length.toLocaleString()} usable rows`;
+    sourceMeta.wm=file.name;status.textContent=`${file.name} · ${wmRows.length.toLocaleString()} usable rows`;
+    await saveCurrentMonthSources();
     await new Promise(r=>requestAnimationFrame(r));
     buildReviewRows();
   }catch(e){
     console.error(e);wmRows=[];status.textContent='Not loaded';showError('WM Spend file could not be read: '+e.message);
   }
 }
-async function handleInstallsFile(file){if(!file)return;try{installsRows=await readDelimitedFile(file);document.getElementById('inst-status').textContent=`${file.name} · ${installsRows.length.toLocaleString()} rows`;buildReviewRows();}catch(e){showError('Completed Installs file could not be read: '+e.message);}}
+async function handleInstallsFile(file){if(!file)return;try{installsRows=await readDelimitedFile(file);sourceMeta.inst=file.name;document.getElementById('inst-status').textContent=`${file.name} · ${installsRows.length.toLocaleString()} rows`;await saveCurrentMonthSources();buildReviewRows();}catch(e){showError('Completed Installs file could not be read: '+e.message);}}
 async function handleTableauFile(file){
   if(!file)return;
   try{
@@ -695,16 +769,26 @@ async function handleTableauFile(file){
     tableauRows=data;
     tableauInfo={fileName:file.name,month:target,loadedAt:new Date().toISOString(),format:(ext==='xlsx'||ext==='xls')?'Excel':'CSV'};
     document.getElementById('tableau-status').textContent=`${file.name} · ${data.length} workrooms${tableauInfo.format==='Excel'?' · full precision':''}`;
+    await saveCurrentMonthSources();
     renderPostCloseValidation();renderMonthWorkflow();
   }catch(e){
     console.error(e);
     showError('Tableau CPI file could not be read: '+e.message);
   }
 }
-function clearMonthlyFiles(){nsRows=[];wmRows=[];wmIndex={totals:new Map(),months:new Map()};installsRows=[];tableauRows=[];tableauInfo=null;selectedWorkroomKey='';['ns-status','wm-status','inst-status'].forEach(id=>document.getElementById(id).textContent='Not loaded');document.getElementById('tableau-status').textContent='Not loaded';document.getElementById('detail-panel').classList.remove('open');document.getElementById('postclose-validation').classList.add('hidden');buildReviewRows();renderMonthWorkflow();}
+async function clearMonthlyFiles(){
+  const ym=document.getElementById('month-select').value||priorMonthISO();
+  await deleteMonthSources(ym);
+  resetLoadedSourceState();
+  buildReviewRows();renderMonthWorkflow();renderPostCloseValidation();
+}
 function syncMonthSelectors(){const main=document.getElementById('month-select'),end=document.getElementById('month-end-select');if(main&&end)end.value=main.value||priorMonthISO();}
 function monthEndMonthChanged(v){const main=document.getElementById('month-select');if(main)main.value=v;monthChanged();}
-function monthChanged(){syncMonthSelectors();tableauRows=[];tableauInfo=null;selectedWorkroomKey='';document.getElementById('tableau-status').textContent='Not loaded';document.getElementById('detail-panel').classList.remove('open');document.getElementById('postclose-validation').classList.add('hidden');buildReviewRows();renderMonthWorkflow();renderPostCloseValidation();}
+async function monthChanged(){
+  syncMonthSelectors();
+  const ym=document.getElementById('month-select').value||priorMonthISO();
+  await restoreMonthSources(ym);
+}
 
 function nsWorkroomName(v){return String(v||'').replace(/^\s*\d+[a-z]?\s*-\s*/i,'').trim();}
 function nsWorkroomKey(v){const n=nsWorkroomName(v);return /^corporate$/i.test(n)?'':norm(n);}
@@ -1243,6 +1327,7 @@ function renderHistory(){const q=norm(document.getElementById('history-search')?
 
 document.getElementById('month-select').value=priorMonthISO();syncMonthSelectors();
 loadSharePoint();
+restoreMonthSources(document.getElementById('month-select').value||priorMonthISO());
 </script>
 </body>
 </html>
