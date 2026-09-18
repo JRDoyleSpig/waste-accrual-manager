@@ -329,6 +329,23 @@ const WM_ALIASES={
   invoiceDate:['Invoice Date','Billing Date','Bill Date','Invoice Dt'],
   amount:['Total Amount USD','Total USD','Total Amount','Amount USD','Total Charge USD','Total Charges USD','Extended Amount USD','Invoice Amount USD','Billed Amount USD','Spend USD']
 };
+
+const WM_LOCATION_RULES={
+  'clarksville':'nashville, tn',
+  'cookeville':'nashville, tn',
+  'east syracuse':'syracuse, ny'
+};
+const WM_EXCLUDE_CURRENT=new Set(['installation group']);
+const WM_HISTORICAL_ONLY=new Set(['utica']);
+
+function wmCleanLocationName(v){
+  return String(v||'')
+    .replace(/^Service Pros\s*-?\s*/i,'')
+    .replace(/\s+\(([^)]+)\)\s*$/,'')
+    .trim();
+}
+function wmRuleKey(v){return norm(wmCleanLocationName(v));}
+
 function wmParseDelimitedRow(line,delim){
   const out=[];let cur='',quoted=false;
   for(let i=0;i<line.length;i++){
@@ -520,6 +537,13 @@ function periodToYM(v){const d=new Date('1 '+String(v||''));if(isNaN(d))return''
 function nsObservedMonths(key){const out=new Set();for(const r of nsRows){if(nsWorkroomKey(col(r,'Workroom'))!==key)continue;const ym=periodToYM(col(r,'Period'));if(ym)out.add(ym);}return [...out].sort();}
 function wmRowYM(r){const d=new Date(col(r,'Service Date')||col(r,'Invoice Date')||'');if(isNaN(d))return'';return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;}
 function wmRowKey(r){
+  const rawLocation=wmCleanLocationName(col(r,'Location Name'));
+  const rawKey=norm(rawLocation);
+
+  if(WM_EXCLUDE_CURRENT.has(rawKey)) return '';
+  if(WM_LOCATION_RULES[rawKey]) return norm(WM_LOCATION_RULES[rawKey]);
+  if(WM_HISTORICAL_ONLY.has(rawKey)) return rawKey;
+
   const store=String(col(r,'Store Number')||'').trim();
   if(store){
     const sn=(store.replace(/\.0+$/,'').replace(/^0+/,'')||'0');
@@ -529,15 +553,16 @@ function wmRowKey(r){
     });
     if(byNumber)return norm(byNumber.name);
   }
-  const raw=String(col(r,'Location Name')||'').replace(/^Service Pros\s*-?\s*/i,'').trim(),nk=norm(raw);
-  if(!nk)return '';
-  const exact=workrooms.find(w=>norm(w.name)===nk);
+
+  if(!rawKey)return '';
+  const exact=workrooms.find(w=>norm(w.name)===rawKey);
   if(exact)return norm(exact.name);
+
   const candidates=workrooms.filter(w=>{
     const city=norm(String(w.name||'').split(',')[0]);
-    return city&&((nk===city)||(nk.startsWith(city)&&city.length>=5)||(city.startsWith(nk)&&nk.length>=5));
+    return city&&((rawKey===city)||(rawKey.startsWith(city)&&city.length>=5)||(city.startsWith(rawKey)&&rawKey.length>=5));
   });
-  return candidates.length===1?norm(candidates[0].name):nk;
+  return candidates.length===1?norm(candidates[0].name):rawKey;
 }
 function wmObservedMonths(key){const out=new Set();for(const r of wmRows){if(wmRowKey(r)!==key)continue;const ym=wmRowYM(r);if(ym)out.add(ym);}return [...out].sort();}
 function monthlyAverage(kind,key,selectedYm,count=null,wmEndMonth=''){
@@ -556,7 +581,12 @@ function historicalFor(key,ym){return historyRows.find(h=>norm(h.name)===key&&h.
 function setupFor(key){return workrooms.find(w=>norm(w.name)===key)||null;}
 function workroomVisibleForMonth(setup,ym){if(!setup)return true;if(setup.closedDate){const closeYm=setup.closedDate.slice(0,7);return ymCompare(ym,shiftYM(closeYm,2))<=0;}return setup.active!==false;}
 function wmExpectedForMonth(setup,key,ym){if(!wmRows.length)return false;if(setup?.wmEndMonth&&ymCompare(ym,setup.wmEndMonth)>0)return false;return setup?.method==='WM Method'||wmObservedMonths(key).some(m=>ymCompare(m,ym)<0);}
-function inferredNames(){const m=new Map();for(const r of nsRows){const raw=col(r,'Workroom'),n=nsWorkroomName(raw),k=nsWorkroomKey(raw);if(n&&k)m.set(k,n);}for(const r of wmRows){const wk=wmRowKey(r),setup=setupFor(wk),raw=String(col(r,'Location Name')||'').replace(/^Service Pros\s*-?\s*/i,'').trim();if(wk)m.set(wk,setup?.name||(raw?raw.replace(/\s+\(([^)]+)\)$/,' $1'):wk));}for(const r of installsRows){const name=String(Object.values(r)[0]||'').trim();if(name&&!/grand total/i.test(name)&&norm(name))m.set(norm(name),name);}for(const w of workrooms)if(w.name)m.set(norm(w.name),w.name);return m;}
+function inferredNames(){const m=new Map();for(const r of nsRows){const raw=col(r,'Workroom'),n=nsWorkroomName(raw),k=nsWorkroomKey(raw);if(n&&k)m.set(k,n);}for(const r of wmRows){
+    const rawKey=wmRuleKey(col(r,'Location Name'));
+    if(WM_EXCLUDE_CURRENT.has(rawKey)||WM_HISTORICAL_ONLY.has(rawKey))continue;
+    const wk=wmRowKey(r),setup=setupFor(wk),raw=wmCleanLocationName(col(r,'Location Name'));
+    if(wk)m.set(wk,setup?.name||(raw||wk));
+  }for(const r of installsRows){const name=String(Object.values(r)[0]||'').trim();if(name&&!/grand total/i.test(name)&&norm(name))m.set(norm(name),name);}for(const w of workrooms)if(w.name)m.set(norm(w.name),w.name);return m;}
 function buildReviewRows(){
   const ym=document.getElementById('month-select').value||priorMonthISO(),names=inferredNames();reviewRows=[];
   for(const [key,name] of names){
