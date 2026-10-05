@@ -914,10 +914,10 @@ async function monthChanged(){
 function nsWorkroomName(v){return String(v||'').replace(/^\s*\d+[a-z]?\s*-\s*/i,'').trim();}
 function nsWorkroomKey(v){const n=nsWorkroomName(v);return /^corporate$/i.test(n)?'':norm(n);}
 function nsSummaryFor(key,ym,includeAccrual=true){
-  const period=monthPeriod(ym);let vendor=0,rev=0,accrual=0,found=false;
+  let vendor=0,rev=0,accrual=0,found=false;
   for(const r of nsRows){
     const wk=nsWorkroomKey(col(r,'Workroom')),rp=String(col(r,'Period')||'').trim();
-    if(!wk||wk!==key||rp!==period)continue;
+    if(!wk||wk!==key||periodToYM(rp)!==ym)continue;
     found=true;
     const a=parseAmount(col(r,'Amount'));
     const isRev=String(col(r,'Is Reversal')||'').trim().toLowerCase()==='yes';
@@ -932,7 +932,23 @@ function nsSummaryFor(key,ym,includeAccrual=true){
 function shiftYM(ym,delta){const [y,m]=ym.split('-').map(Number),d=new Date(Date.UTC(y,m-1+delta,1));return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}`;}
 function ymCompare(a,b){return String(a||'').localeCompare(String(b||''));}
 function monthsBetween(start,end){const out=[];if(!start||!end||ymCompare(start,end)>0)return out;let x=start;while(ymCompare(x,end)<=0&&out.length<600){out.push(x);x=shiftYM(x,1);}return out;}
-function periodToYM(v){const d=new Date('1 '+String(v||''));if(isNaN(d))return'';return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;}
+function periodToYM(v){
+  const s=String(v||'').trim();
+  if(!s)return'';
+  const m=s.match(/^([A-Za-z]{3,9})[\s-]+(\d{2}|\d{4})$/);
+  if(m){
+    const months={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,sept:9,oct:10,nov:11,dec:12};
+    const mon=months[m[1].toLowerCase()];
+    if(mon){
+      let year=Number(m[2]);
+      if(year<100)year+=2000;
+      return `${year}-${String(mon).padStart(2,'0')}`;
+    }
+  }
+  const d=new Date('1 '+s);
+  if(isNaN(d))return'';
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
 function nsObservedMonths(key){const out=new Set();for(const r of nsRows){if(nsWorkroomKey(col(r,'Workroom'))!==key)continue;const ym=periodToYM(col(r,'Period'));if(ym)out.add(ym);}return [...out].sort();}
 function wmRowYM(r){const d=new Date(col(r,'Service Date')||col(r,'Invoice Date')||'');if(isNaN(d))return'';return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;}
 function wmRowKey(r){
